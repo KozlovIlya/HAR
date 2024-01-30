@@ -1,0 +1,6 @@
+.vscode
+.cache
+build
+third_party
+src/a.out.wasm
+/src/a.out.js
