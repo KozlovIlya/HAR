@@ -18,7 +18,7 @@ void Application::run() {
     auto entity = m_data.registry.create();
     m_data.registry.emplace<HAR::Component::Renderable>(entity);
     m_data.registry.emplace<HAR::Component::Polygon>(entity, 0.5f, 1000);
-    m_data.registry.emplace<HAR::Component::Location>(entity, HAR::Math::Vector2(0.0f, 0.0f));
+    m_data.registry.emplace<HAR::Component::Location>(entity, HAR::Math::Vector2(1.0f, -1.0f));
     emscripten_set_main_loop_arg(Application::mainLoop, &m_data, 0, 1);
 }
 

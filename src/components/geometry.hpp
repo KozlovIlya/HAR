@@ -9,6 +9,10 @@ struct Polygon {
     int vertexCount;
 };
 
+struct Circle {
+    float radius;
+};
+
 struct Quaterion {
     float x, y, z, w;
 };

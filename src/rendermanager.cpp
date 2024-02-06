@@ -37,14 +37,14 @@ void RenderManager::tick(float deltaTime) {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    auto view = m_registry.view<HAR::Component::Renderable, HAR::Component::Polygon>();
-    m_positionAttrib = glGetAttribLocation(m_shaderProgram, "position");
-    glEnableVertexAttribArray(m_positionAttrib);
-    glVertexAttribPointer(m_positionAttrib, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-    for (auto entity : view) {
-        auto& polygon = view.get<HAR::Component::Polygon>(entity);
-        loadPolygonIntoBuffer(polygon.radius, HAR::Math::Vector2(0.f, 0.f), polygon.vertexCount);
-        glDrawArrays(GL_TRIANGLE_FAN, 0, polygon.vertexCount);
+    auto view = m_registry.view<HAR::Component::Renderable, HAR::Component::Location>();
+    for (auto entity: view) {
+        HAR::Math::Vector2 locationVec = view.get<HAR::Component::Location>(view.front()).location;
+        if (m_registry.all_of<HAR::Component::Polygon>(entity)) {
+            auto& polygon = m_registry.get<HAR::Component::Polygon>(entity);
+            loadPolygonIntoBuffer(polygon.radius, locationVec, polygon.vertexCount);
+            glDrawArrays(GL_TRIANGLE_FAN, 0, polygon.vertexCount);
+        }
     }
 
     emscripten_webgl_commit_frame();
