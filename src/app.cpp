@@ -1,6 +1,12 @@
 #include "app.hpp"
+#include "components/common.hpp"
+#include "components/render.hpp"
+#include "components/geometry.hpp"
+#include "components/gameplay.hpp"
 #include "rendermanager.hpp"
 #include "vector2.hpp"
+
+#include <entt/entt.hpp>
 
 #include <emscripten/emscripten.h>
 #include <emscripten/html5.h>
@@ -9,6 +15,10 @@ void Application::run() {
     m_data.lastTime = 0.f;
     m_data.managers.emplace_back(std::make_unique<RenderManager>(m_data.registry));
     m_data.managers[0]->init();
+    auto entity = m_data.registry.create();
+    m_data.registry.emplace<HAR::Component::Renderable>(entity);
+    m_data.registry.emplace<HAR::Component::Polygon>(entity, 0.5f, 1000);
+    m_data.registry.emplace<HAR::Component::Location>(entity, HAR::Math::Vector2(0.0f, 0.0f));
     emscripten_set_main_loop_arg(Application::mainLoop, &m_data, 0, 1);
 }
 
@@ -18,10 +28,10 @@ double Application::getDevicePixelRatio() const {
     });
 }
 
-HAR::Vector2 Application::getScaleFactor() const {
+HAR::Math::Vector2 Application::getScaleFactor() const {
     double x,y;
     emscripten_get_element_css_size("#canvas", &x, &y);
-    HAR::Vector2 screenSize(x, y);
+    HAR::Math::Vector2 screenSize(x, y);
     return screenSize;
 }
 

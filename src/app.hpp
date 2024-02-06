@@ -20,7 +20,7 @@ public:
     void run();
 // Utils
 public:
-    class HAR::Vector2 getScaleFactor() const;
+    class HAR::Math::Vector2 getScaleFactor() const;
     double getDevicePixelRatio() const;
 protected:
     static void mainLoop(void* arg);
