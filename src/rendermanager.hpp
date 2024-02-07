@@ -12,7 +12,9 @@ public:
     RenderManager(entt::registry& registry) : Manager(registry) {}
     virtual void tick(float deltaTime) override;
     virtual void init() override;
-    virtual ~RenderManager() override {};
+    virtual ~RenderManager() override;
+public:
+    HAR::Math::Vector2 getCanvasSize() const;
 protected:
     GLuint compileShader(GLenum type, const char* source);
     GLuint createShaderProgram(const char* vertexSource, const char* fragmentSource);

@@ -5,15 +5,35 @@
 #include "components/geometry.hpp"
 
 #include "shaders.hpp"
+#include "constants.hpp"
 
 #include <emscripten/emscripten.h>
 #include <emscripten/html5.h>
 #include <GLES2/gl2.h>
 #include <entt/entt.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <vector>
 #include <cmath>
 #include <iostream>
+
+
+RenderManager::~RenderManager() {
+    glDeleteProgram(m_shaderProgram);
+    glDeleteBuffers(1, &m_VBO);
+    emscripten_webgl_destroy_context(m_ctx);
+}
+
+HAR::Math::Vector2 RenderManager::getCanvasSize() const {
+    double width, height;
+    EM_ASM({
+        var canvas = Module['canvas'];
+        setValue($0, canvas.width, 'double');
+        setValue($1, canvas.height, 'double');
+    }, &width, &height);
+    return HAR::Math::Vector2(static_cast<float>(width), static_cast<float>(height));
+}
 
 void RenderManager::init() {
     EmscriptenWebGLContextAttributes attrs;
@@ -34,19 +54,39 @@ void RenderManager::init() {
 
 void RenderManager::tick(float deltaTime) {
     glUseProgram(m_shaderProgram);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+
+    GLint resolutionLoc = glGetUniformLocation(m_shaderProgram, "u_resolution");
+    glUniform2fv(resolutionLoc, 1, glm::value_ptr(getCanvasSize().get<glm::vec2>()));
 
     auto view = m_registry.view<HAR::Component::Renderable, HAR::Component::Location>();
     for (auto entity: view) {
-        HAR::Math::Vector2 locationVec = view.get<HAR::Component::Location>(view.front()).location;
-        if (m_registry.all_of<HAR::Component::Polygon>(entity)) {
-            auto& polygon = m_registry.get<HAR::Component::Polygon>(entity);
-            loadPolygonIntoBuffer(polygon.radius, locationVec, polygon.vertexCount);
-            glDrawArrays(GL_TRIANGLE_FAN, 0, polygon.vertexCount);
+        auto locationVec = view.get<HAR::Component::Location>(view.front()).location.get<glm::vec2>();
+        GLint locationLoc = glGetUniformLocation(m_shaderProgram, "u_location");
+        if (m_registry.all_of<HAR::Component::Circle>(entity)) {
+            auto& circle = m_registry.get<HAR::Component::Circle>(entity);
+            GLint radiusLoc = glGetUniformLocation(m_shaderProgram, "u_radius");
+            glUniform1f(radiusLoc, circle.radius);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(HAR::Constants::SQUARE), HAR::Constants::SQUARE, GL_DYNAMIC_DRAW);
+            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+            glEnableVertexAttribArray(0);
+            glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+        } else if (m_registry.all_of<HAR::Component::Polyhedron>(entity)) {
+            auto& polyhedron = m_registry.get<HAR::Component::Polyhedron>(entity);
+            std::vector<float> vertices;
+            for (auto& vertex: polyhedron.vertices) {
+                vertices.push_back(vertex.x);
+                vertices.push_back(vertex.y);
+            }
+            GLint radiusLoc = glGetUniformLocation(m_shaderProgram, "u_radius");
+            glUniform1f(radiusLoc, 0.0f);
+            glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_DYNAMIC_DRAW);
+            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+            glEnableVertexAttribArray(0);
+            glDrawArrays(GL_TRIANGLE_FAN, 0, polyhedron.vertices.size());
         }
     }
-
     emscripten_webgl_commit_frame();
 }
 
@@ -91,7 +131,7 @@ GLuint RenderManager::createShaderProgram(const char* vertexSource, const char* 
 
 void RenderManager::setupVerticesBuffer() {
     glGenBuffers(1, &m_VBO);
-    // Initially, we don't load data into the buffer
+    glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
 }
 
 void RenderManager::loadPolygonIntoBuffer(float radius, HAR::Math::Vector2 location, int segments) {
@@ -114,373 +154,7 @@ void RenderManager::loadPolygonIntoBuffer(float radius, HAR::Math::Vector2 locat
     glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
     glBufferData(GL_ARRAY_BUFFER, polygonVertices.size() * sizeof(GLfloat), polygonVertices.data(), GL_DYNAMIC_DRAW);
 
-    GLint positionAttribLocation = glGetAttribLocation(m_shaderProgram, "position");
+    GLint positionAttribLocation = glGetAttribLocation(m_shaderProgram, "a_position");
     glEnableVertexAttribArray(positionAttribLocation);
     glVertexAttribPointer(positionAttribLocation, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

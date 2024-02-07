@@ -2,19 +2,16 @@
 
 #include "../vector2.hpp"
 
-namespace HAR::Component {
+#include <vector>
 
-struct Polygon {
-    float radius;
-    int vertexCount;
-};
+namespace HAR::Component {
 
 struct Circle {
     float radius;
 };
 
-struct Quaterion {
-    float x, y, z, w;
+struct Polyhedron {
+    std::vector<HAR::Math::Vector2> vertices;
 };
 
 }

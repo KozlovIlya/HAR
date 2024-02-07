@@ -2,50 +2,52 @@
 
 namespace HAR::Shader {
 
-// const char* vertexShaderSource = R"glsl(
-//     precision mediump float;
+// Vertex Shader
+const char* vertexShaderSource = R"glsl(
+precision mediump float;
 
-//     attribute vec2 position;
-//     // attribute vec4 vertexColor;
+attribute vec2 a_position;
 
-//     // uniform vec2 u_location;
-//     // uniform float u_scale;
+uniform vec2 u_resolution;
+uniform vec2 u_location;
+uniform vec4 u_color;
 
-//     // varying vec4 fragColor;
+// CIRCLE
+uniform float u_radius;
 
-//     void main() {
-//         // vec2 transformedPosition = (position * u_scale) + u_location;
-//         // gl_Position = vec4(transformedPosition, 0.0, 1.0);
-//         // fragColor = vertexColor;
-//         gl_Position = vec4(position, 0.0, 1.0);
-//     }
-// )glsl";
+void main() {
+    gl_Position = vec4(u_location + a_position, 0.0, 1.0);
+}
+)glsl";
 
-// const char* fragmentShaderSource = R"glsl(
-//     // precision mediump float;
-//     // varying vec4 fragColor;
+// Fragment Shader
+const char* fragmentShaderSource = R"glsl(
+precision mediump float;
 
-//     void main() {
-//         // gl_FragColor = fragColor;
-//         gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-//     }
-//     )glsl";
-// }
+uniform vec2 u_resolution;
+uniform vec2 u_location;
+uniform vec4 u_color;
 
+// CIRCLE
+uniform float u_radius;
 
+void main() {
+    vec2 normalizedCoords = gl_FragCoord.xy / u_resolution.xy;
+    vec2 coords = normalizedCoords * 2.0 - 1.0;
 
-const char* vertexShaderSource = R"(
-    attribute vec2 position;
-    void main() {
-        gl_Position = vec4(position, 0.0, 1.0);
+    // Вычисляем расстояние от текущего пикселя до центра круга
+    float dist = length(u_location - coords);
+
+    if (u_radius <= 0.0) {
+        gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);
+    } else {
+        if (dist < u_radius) {
+            gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+        } else {
+            discard;
+        }
     }
-)";
-
-const char* fragmentShaderSource = R"(
-    precision mediump float;
-    void main() {
-        gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0); // Зелёный цвет
-    }
-)";
+}
+)glsl";
 
 } // namespace HAR::Shader

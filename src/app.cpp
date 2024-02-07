@@ -1,9 +1,11 @@
 #include "app.hpp"
+
 #include "components/common.hpp"
 #include "components/render.hpp"
 #include "components/geometry.hpp"
 #include "components/gameplay.hpp"
 #include "rendermanager.hpp"
+
 #include "vector2.hpp"
 
 #include <entt/entt.hpp>
@@ -15,10 +17,25 @@ void Application::run() {
     m_data.lastTime = 0.f;
     m_data.managers.emplace_back(std::make_unique<RenderManager>(m_data.registry));
     m_data.managers[0]->init();
-    auto entity = m_data.registry.create();
-    m_data.registry.emplace<HAR::Component::Renderable>(entity);
-    m_data.registry.emplace<HAR::Component::Polygon>(entity, 0.5f, 1000);
-    m_data.registry.emplace<HAR::Component::Location>(entity, HAR::Math::Vector2(1.0f, -1.0f));
+    
+    auto entityCircle = m_data.registry.create();
+    m_data.registry.emplace<HAR::Component::Renderable>(entityCircle, true);
+    m_data.registry.emplace<HAR::Component::Circle>(entityCircle, 0.2f);
+    m_data.registry.emplace<HAR::Component::Location>(entityCircle, HAR::Math::Vector2(0.0f, 0.0f));
+
+    auto entityPolyhedron = m_data.registry.create();
+    m_data.registry.emplace<HAR::Component::Renderable>(entityPolyhedron, true);
+    m_data.registry.emplace<HAR::Component::Polyhedron>(entityPolyhedron, std::vector<HAR::Math::Vector2>{
+        HAR::Math::Vector2(-0.3f, -0.2f),
+        HAR::Math::Vector2(-0.2f, 0.3f),
+        HAR::Math::Vector2(0.1f, 0.4f),
+        HAR::Math::Vector2(0.4f, 0.1f),
+        HAR::Math::Vector2(0.3f, -0.3f),
+        HAR::Math::Vector2(0.0f, -0.4f)
+    });
+
+    m_data.registry.emplace<HAR::Component::Location>(entityPolyhedron, HAR::Math::Vector2(-0.7f, 0.3f));
+
     emscripten_set_main_loop_arg(Application::mainLoop, &m_data, 0, 1);
 }
 
