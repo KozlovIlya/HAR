@@ -18,6 +18,12 @@ public:
 protected:
     GLuint compileShader(GLenum type, const char* source);
     GLuint createShaderProgram(const char* vertexSource, const char* fragmentSource);
+    void prepareForRendering(float deltaTime);
+    void renderEntity(entt::entity entity);
+    void renderCircle(entt::entity entity);
+    void renderPolyhedron(entt::entity entity);
+    void finalizeRendering();
+
 protected:
     void setupVerticesBuffer();
 protected:

@@ -53,42 +53,72 @@ void RenderManager::init() {
 }
 
 void RenderManager::tick(float deltaTime) {
+    prepareForRendering(deltaTime);
+
+    auto view = m_registry.view<HAR::Component::Renderable, HAR::Component::Location>();
+    for (auto entity: view) {
+        renderEntity(entity);
+    }
+
+    finalizeRendering();
+}
+
+void RenderManager::prepareForRendering(float deltaTime) {
     glUseProgram(m_shaderProgram);
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    glm::vec2 canvasSize = getCanvasSize().get<glm::vec2>();
     GLint resolutionLoc = glGetUniformLocation(m_shaderProgram, "u_resolution");
-    glUniform2fv(resolutionLoc, 1, glm::value_ptr(getCanvasSize().get<glm::vec2>()));
+    glUniform2fv(resolutionLoc, 1, glm::value_ptr(canvasSize));
 
-    auto view = m_registry.view<HAR::Component::Renderable, HAR::Component::Location>();
-    for (auto entity: view) {
-        auto locationVec = view.get<HAR::Component::Location>(view.front()).location.get<glm::vec2>();
-        GLint locationLoc = glGetUniformLocation(m_shaderProgram, "u_location");
-        if (m_registry.all_of<HAR::Component::Circle>(entity)) {
-            auto& circle = m_registry.get<HAR::Component::Circle>(entity);
-            GLint radiusLoc = glGetUniformLocation(m_shaderProgram, "u_radius");
-            glUniform1f(radiusLoc, circle.radius);
-            glBufferData(GL_ARRAY_BUFFER, sizeof(HAR::Constants::SQUARE), HAR::Constants::SQUARE, GL_DYNAMIC_DRAW);
-            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-            glEnableVertexAttribArray(0);
-            glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-        } else if (m_registry.all_of<HAR::Component::Polyhedron>(entity)) {
-            auto& polyhedron = m_registry.get<HAR::Component::Polyhedron>(entity);
-            std::vector<float> vertices;
-            for (auto& vertex: polyhedron.vertices) {
-                vertices.push_back(vertex.x);
-                vertices.push_back(vertex.y);
-            }
-            GLint radiusLoc = glGetUniformLocation(m_shaderProgram, "u_radius");
-            glUniform1f(radiusLoc, 0.0f);
-            glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_DYNAMIC_DRAW);
-            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-            glEnableVertexAttribArray(0);
-            glDrawArrays(GL_TRIANGLE_FAN, 0, polyhedron.vertices.size());
-        }
+    glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+}
+
+void RenderManager::renderEntity(entt::entity entity) {
+    auto& locationComp = m_registry.get<HAR::Component::Location>(entity);
+    glm::vec2 locationVec = locationComp.location.get<glm::vec2>();
+    GLint locationLoc = glGetUniformLocation(m_shaderProgram, "u_location");
+    glUniform2fv(locationLoc, 1, glm::value_ptr(locationVec));
+
+    if (m_registry.all_of<HAR::Component::Circle>(entity)) {
+        renderCircle(entity);
+    } else if (m_registry.all_of<HAR::Component::Polyhedron>(entity)) {
+        renderPolyhedron(entity);
     }
+}
+
+void RenderManager::renderCircle(entt::entity entity) {
+    auto& circle = m_registry.get<HAR::Component::Circle>(entity);
+    GLint radiusLoc = glGetUniformLocation(m_shaderProgram, "u_radius");
+    glUniform1f(radiusLoc, circle.radius);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(HAR::Constants::SQUARE), HAR::Constants::SQUARE, GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+
+void RenderManager::renderPolyhedron(entt::entity entity) {
+    auto& polyhedron = m_registry.get<HAR::Component::Polyhedron>(entity);
+    std::vector<float> vertices;
+    for (auto& vertex: polyhedron.vertices) {
+        vertices.push_back(vertex.x);
+        vertices.push_back(vertex.y);
+    }
+    // TODO: It's temporary solution for non-circles ident
+    GLint radiusLoc = glGetUniformLocation(m_shaderProgram, "u_radius");
+    glUniform1f(radiusLoc, 0.0f);
+    
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, polyhedron.vertices.size());
+}
+
+void RenderManager::finalizeRendering() {
     emscripten_webgl_commit_frame();
 }
+
 
 GLuint RenderManager::compileShader(GLenum type, const char* source) {
     GLint success;
