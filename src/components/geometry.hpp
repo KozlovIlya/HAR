@@ -1,7 +1,6 @@
 #pragma once
 
-#include "../vector2.hpp"
-
+#include <glm/ext/vector_float2.hpp>
 #include <vector>
 
 namespace HAR::Component {
@@ -11,7 +10,7 @@ struct Circle {
 };
 
 struct Polyhedron {
-    std::vector<HAR::Math::Vector2> vertices;
+    std::vector<glm::vec2> vertices;
 };
 
 }

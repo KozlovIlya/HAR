@@ -1,6 +1,9 @@
 #pragma once
 
-#include "entt/entt.hpp"
+#include <entt/entt.hpp>
+#include <box2d/box2d.h>
+#include <emscripten.h>
+#include <memory>
 
 class Manager {
 public:

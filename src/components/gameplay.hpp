@@ -1,42 +1,31 @@
 #pragma once
 
-#include "../vector2.hpp"
-#include "box2d/b2_world.h"
+#include <functional>
+#include <glm/ext/vector_float2.hpp>
 
-#include <box2d/box2d.h>
 
 namespace HAR::Component {
 
 struct Location {
-    HAR::Math::Vector2 location;
+    glm::vec2 value;
 };
 
-struct DesiredMovementDirection {
-    HAR::Math::Vector2 direction;
+struct Movement {
+    glm::vec2 velocity;
+    glm::vec2 direction;
+    float acceleration;
+    float maxSpeed;
+    float inertiaFactor;
 };
 
-struct Velocity {
-    HAR::Math::Vector2 velocity;
-};
 
-struct Acceleration {
-    HAR::Math::Vector2 acceleration;
-};
 
-struct Mass {
-    float mass;
-};
-
-struct Force {
-    HAR::Math::Vector2 force;
-};
-
-struct PhysicsBody {
-    b2Body* body;
-};
-
-struct World {
-    b2World* world;
-};
+// struct Body {
+//     b2BodyDef bodyDef;
+//     b2FixtureDef fixtureDef;
+//     b2MassData massData;
+//     b2Body* body;
+//     b2Fixture* fixture;
+// };
 
 }

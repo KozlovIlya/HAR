@@ -1,8 +1,10 @@
 #pragma once
 
+#include <glm/ext/vector_float2.hpp>
+
 namespace HAR::Constants {
 
-HAR::Math::Vector2 const DEFAULT_LOCATION = {0, 0};
+glm::vec2 const DEFAULT_LOCATION = {0, 0};
 
 float SQUARE[] = {
 -1.0f,  1.0f,
@@ -10,5 +12,7 @@ float SQUARE[] = {
 1.0f, -1.0f,
 1.0f,  1.0f
 };
+}
 
+namespace HAR::Static {
 }

@@ -1,22 +1,14 @@
 #include "rendermanager.hpp"
 
 #include "components/render.hpp"
-#include "components/gameplay.hpp"
 #include "components/geometry.hpp"
+#include "components/gameplay.hpp"
+
+#include "glm/ext/vector_float2.hpp"
+#include "glm/gtc/type_ptr.hpp"
 
 #include "shaders.hpp"
 #include "constants.hpp"
-
-#include <emscripten/emscripten.h>
-#include <emscripten/html5.h>
-#include <GLES2/gl2.h>
-#include <entt/entt.hpp>
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-#include <vector>
-#include <cmath>
-#include <iostream>
 
 
 RenderManager::~RenderManager() {
@@ -25,14 +17,14 @@ RenderManager::~RenderManager() {
     emscripten_webgl_destroy_context(m_ctx);
 }
 
-HAR::Math::Vector2 RenderManager::getCanvasSize() const {
+glm::vec2 RenderManager::getCanvasSize() const {
     double width, height;
     EM_ASM({
         var canvas = Module['canvas'];
         setValue($0, canvas.width, 'double');
         setValue($1, canvas.height, 'double');
     }, &width, &height);
-    return HAR::Math::Vector2(static_cast<float>(width), static_cast<float>(height));
+    return glm::vec2(static_cast<float>(width), static_cast<float>(height));
 }
 
 void RenderManager::init() {
@@ -68,7 +60,7 @@ void RenderManager::prepareForRendering(float deltaTime) {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    glm::vec2 canvasSize = getCanvasSize().get<glm::vec2>();
+    auto canvasSize = getCanvasSize();
     GLint resolutionLoc = glGetUniformLocation(m_shaderProgram, "u_resolution");
     glUniform2fv(resolutionLoc, 1, glm::value_ptr(canvasSize));
 
@@ -77,9 +69,9 @@ void RenderManager::prepareForRendering(float deltaTime) {
 
 void RenderManager::renderEntity(entt::entity entity) {
     auto& locationComp = m_registry.get<HAR::Component::Location>(entity);
-    glm::vec2 locationVec = locationComp.location.get<glm::vec2>();
+
     GLint locationLoc = glGetUniformLocation(m_shaderProgram, "u_location");
-    glUniform2fv(locationLoc, 1, glm::value_ptr(locationVec));
+    glUniform2fv(locationLoc, 1, glm::value_ptr(locationComp.value));
 
     if (m_registry.all_of<HAR::Component::Circle>(entity)) {
         renderCircle(entity);
@@ -164,7 +156,7 @@ void RenderManager::setupVerticesBuffer() {
     glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
 }
 
-void RenderManager::loadPolygonIntoBuffer(float radius, HAR::Math::Vector2 location, int segments) {
+void RenderManager::loadPolygonIntoBuffer(float radius, glm::vec2 location, int segments) {
     if (segments < 3) {
         segments = 3;
     }

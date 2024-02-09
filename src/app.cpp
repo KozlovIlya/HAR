@@ -1,59 +1,54 @@
 #include "app.hpp"
 
-#include "components/common.hpp"
 #include "components/render.hpp"
 #include "components/geometry.hpp"
 #include "components/gameplay.hpp"
+
 #include "inputmanager.hpp"
 #include "rendermanager.hpp"
+#include "movementmanager.hpp"
 
-#include "vector2.hpp"
 
 #include <entt/entt.hpp>
+#include <box2d/box2d.h>
 
 #include <emscripten/emscripten.h>
 #include <emscripten/html5.h>
+#include <iostream>
 
 void Application::run() {
     m_data.lastTime = 0.f;
-    m_data.managers.emplace_back(std::make_unique<InputManager>(m_data.registry));
-    m_data.managers[0]->init();
-    m_data.managers.emplace_back(std::make_unique<RenderManager>(m_data.registry));
-    m_data.managers[1]->init();
-    
+    m_data.registry.clear();
+
     auto entityCircle = m_data.registry.create();
     m_data.registry.emplace<HAR::Component::Renderable>(entityCircle, true);
-    m_data.registry.emplace<HAR::Component::Circle>(entityCircle, 0.2f);
-    m_data.registry.emplace<HAR::Component::Location>(entityCircle, HAR::Math::Vector2(0.0f, 0.0f));
-    m_data.registry.emplace<HAR::Component::DesiredMovementDirection>(entityCircle, HAR::Math::Vector2(0.0f, 0.0f));
+    m_data.registry.emplace<HAR::Component::Circle>(entityCircle, 0.05f);
+    m_data.registry.emplace<HAR::Component::Location>(entityCircle, glm::vec2(0.f, 0.f));
+    m_data.registry.emplace<HAR::Component::Movement>(entityCircle,
+        glm::vec2(0.f, 0.f),
+        glm::vec2(0.f, 0.f),
+        .00001f,
+        .01f,
+        .99f
+    );
 
     auto entityPolyhedron = m_data.registry.create();
     m_data.registry.emplace<HAR::Component::Renderable>(entityPolyhedron, true);
-    m_data.registry.emplace<HAR::Component::Polyhedron>(entityPolyhedron, std::vector<HAR::Math::Vector2>{
-        HAR::Math::Vector2(-0.3f, -0.2f),
-        HAR::Math::Vector2(-0.2f, 0.3f),
-        HAR::Math::Vector2(0.1f, 0.4f),
-        HAR::Math::Vector2(0.4f, 0.1f),
-        HAR::Math::Vector2(0.3f, -0.3f),
-        HAR::Math::Vector2(0.0f, -0.4f)
+    m_data.registry.emplace<HAR::Component::Polyhedron>(entityPolyhedron, std::vector<glm::vec2>{
+        glm::vec2(-0.3f, -0.2f),
+        glm::vec2(-0.2f, 0.3f),
+        glm::vec2(0.1f, 0.4f),
+        glm::vec2(0.4f, 0.1f),
+        glm::vec2(0.3f, -0.3f),
+        glm::vec2(0.0f, -0.4f)
     });
-
-    m_data.registry.emplace<HAR::Component::Location>(entityPolyhedron, HAR::Math::Vector2(-0.7f, 0.3f));
+    m_data.registry.emplace<HAR::Component::Location>(entityPolyhedron, glm::vec2(-0.7f, 0.3f));
+    
+    m_data.managers.emplace_back(std::make_unique<InputManager>(m_data.registry))->init();
+    m_data.managers.emplace_back(std::make_unique<MovementManager>(m_data.registry))->init();
+    m_data.managers.emplace_back(std::make_unique<RenderManager>(m_data.registry))->init();
     
     emscripten_set_main_loop_arg(Application::mainLoop, &m_data, 0, 1);
-}
-
-double Application::getDevicePixelRatio() const {
-    return EM_ASM_DOUBLE({
-        return window.devicePixelRatio || 1.0;
-    });
-}
-
-HAR::Math::Vector2 Application::getScaleFactor() const {
-    double x,y;
-    emscripten_get_element_css_size("#canvas", &x, &y);
-    HAR::Math::Vector2 screenSize(x, y);
-    return screenSize;
 }
 
 void Application::mainLoop(void* arg) {
