@@ -4,6 +4,7 @@
 #include "components/render.hpp"
 #include "components/geometry.hpp"
 #include "components/gameplay.hpp"
+#include "inputmanager.hpp"
 #include "rendermanager.hpp"
 
 #include "vector2.hpp"
@@ -15,13 +16,16 @@
 
 void Application::run() {
     m_data.lastTime = 0.f;
-    m_data.managers.emplace_back(std::make_unique<RenderManager>(m_data.registry));
+    m_data.managers.emplace_back(std::make_unique<InputManager>(m_data.registry));
     m_data.managers[0]->init();
+    m_data.managers.emplace_back(std::make_unique<RenderManager>(m_data.registry));
+    m_data.managers[1]->init();
     
     auto entityCircle = m_data.registry.create();
     m_data.registry.emplace<HAR::Component::Renderable>(entityCircle, true);
     m_data.registry.emplace<HAR::Component::Circle>(entityCircle, 0.2f);
     m_data.registry.emplace<HAR::Component::Location>(entityCircle, HAR::Math::Vector2(0.0f, 0.0f));
+    m_data.registry.emplace<HAR::Component::DesiredMovementDirection>(entityCircle, HAR::Math::Vector2(0.0f, 0.0f));
 
     auto entityPolyhedron = m_data.registry.create();
     m_data.registry.emplace<HAR::Component::Renderable>(entityPolyhedron, true);
@@ -35,7 +39,7 @@ void Application::run() {
     });
 
     m_data.registry.emplace<HAR::Component::Location>(entityPolyhedron, HAR::Math::Vector2(-0.7f, 0.3f));
-
+    
     emscripten_set_main_loop_arg(Application::mainLoop, &m_data, 0, 1);
 }
 
