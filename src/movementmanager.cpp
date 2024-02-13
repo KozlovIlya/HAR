@@ -12,6 +12,8 @@ void MovementManager::tick(float deltaTime) {
     for (auto& entity : view) {
         auto& location = view.get<HAR::Component::Location>(entity);
         auto& movement = view.get<HAR::Component::Movement>(entity);
+        glm::vec2 collisionFactor = glm::vec2(1.0f, 1.0f);
+        // if (m_registry.all_of<HAR::Component::PhysicalBody>()
         glm::vec2 accelerationVector = movement.direction * movement.acceleration;
         movement.velocity += accelerationVector * deltaTime;
         float speed = glm::length(movement.velocity);

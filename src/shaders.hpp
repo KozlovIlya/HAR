@@ -39,10 +39,10 @@ void main() {
     float dist = length(u_location - coords);
 
     if (u_radius <= 0.0) {
-        gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);
+        gl_FragColor = u_color;
     } else {
         if (dist < u_radius) {
-            gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            gl_FragColor = u_color;
         } else {
             discard;
         }

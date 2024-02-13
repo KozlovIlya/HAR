@@ -4,6 +4,8 @@
 #include <box2d/box2d.h>
 #include <emscripten.h>
 #include <memory>
+#include <queue>
+#include <vector>
 
 class Manager {
 public:

@@ -1,7 +1,13 @@
 #pragma once
 
-#include <functional>
+#include <entt/entity/fwd.hpp>
 #include <glm/ext/vector_float2.hpp>
+
+#include <unordered_map>
+#include <functional>
+#include <optional>
+#include <unordered_set>
+#include <vector>
 
 
 namespace HAR::Component {
@@ -11,21 +17,31 @@ struct Location {
 };
 
 struct Movement {
-    glm::vec2 velocity;
-    glm::vec2 direction;
     float acceleration;
     float maxSpeed;
     float inertiaFactor;
+    // bool  bDynamic;
+    glm::vec2 velocity;
+    glm::vec2 direction;
 };
 
+struct Mass {
+    float value;
+};
 
+struct Overlap {
+    struct OverlapCheckResult {
+        std::vector<glm::vec2> overlapPoints;
+        std::optional<glm::vec2> touchPoint;
+        std::optional<float> timeSinceTouch;
+        bool bFullOverlap;
+    };
 
-// struct Body {
-//     b2BodyDef bodyDef;
-//     b2FixtureDef fixtureDef;
-//     b2MassData massData;
-//     b2Body* body;
-//     b2Fixture* fixture;
-// };
+    std::unordered_map<entt::entity, OverlapCheckResult> overlapCheckResultMap;
+};
+
+struct PhysicalBody {
+    float hitEnergyMultiplier;
+};
 
 }

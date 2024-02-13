@@ -1,5 +1,7 @@
 #pragma once
 
+#include <glm/vec4.hpp>
+
 namespace HAR::Component {
 
 struct Renderable {
@@ -7,7 +9,7 @@ struct Renderable {
 };
 
 struct Color {
-    float r, g, b, a;
+    glm::vec4 value;
 };
 
 

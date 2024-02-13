@@ -5,10 +5,11 @@
 #include "components/gameplay.hpp"
 
 #include "glm/ext/vector_float2.hpp"
+#include "glm/ext/vector_float4.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
 #include "shaders.hpp"
-#include "constants.hpp"
+#include "utils.hpp"
 
 
 RenderManager::~RenderManager() {
@@ -73,6 +74,15 @@ void RenderManager::renderEntity(entt::entity entity) {
     GLint locationLoc = glGetUniformLocation(m_shaderProgram, "u_location");
     glUniform2fv(locationLoc, 1, glm::value_ptr(locationComp.value));
 
+    if (m_registry.all_of<HAR::Component::Color>(entity)) {
+        auto& color = m_registry.get<HAR::Component::Color>(entity);
+        GLint colorLoc = glGetUniformLocation(m_shaderProgram, "u_color");
+        glUniform4fv(colorLoc, 1, glm::value_ptr(color.value));
+    } else {
+        GLint colorLoc = glGetUniformLocation(m_shaderProgram, "u_color");
+        glUniform4fv(colorLoc, 1, glm::value_ptr(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)));
+    }
+
     if (m_registry.all_of<HAR::Component::Circle>(entity)) {
         renderCircle(entity);
     } else if (m_registry.all_of<HAR::Component::Polyhedron>(entity)) {
@@ -84,7 +94,7 @@ void RenderManager::renderCircle(entt::entity entity) {
     auto& circle = m_registry.get<HAR::Component::Circle>(entity);
     GLint radiusLoc = glGetUniformLocation(m_shaderProgram, "u_radius");
     glUniform1f(radiusLoc, circle.radius);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(HAR::Constants::SQUARE), HAR::Constants::SQUARE, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(HAR::Math::SQUARE), HAR::Math::SQUARE, GL_DYNAMIC_DRAW);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
