@@ -21,15 +21,15 @@ void InputManager::init() {
 }
 
 void InputManager::tick(float deltaTime) {
-    auto view = m_registry.view<HAR::Component::Movement>();
+    auto view = m_registry.view<HAR::Component::ControlledMovement>();
     for (auto entity : view) {
-        auto& direction = view.get<HAR::Component::Movement>(entity).direction;
+        auto& controlledMovement = view.get<HAR::Component::ControlledMovement>(entity).value;
         auto updatedDiretion = glm::vec2(0.f,0.f);
         if (m_up) updatedDiretion.y += 1;
         if (m_down) updatedDiretion.y -= 1;
         if (m_left) updatedDiretion.x -= 1;
         if (m_right) updatedDiretion.x += 1;
-        direction = updatedDiretion;
+        controlledMovement = updatedDiretion;
     }
 }
 

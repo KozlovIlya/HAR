@@ -6,8 +6,9 @@
 
 #include "inputmanager.hpp"
 #include "rendermanager.hpp"
-#include "overlapmanager.hpp"
 #include "movementmanager.hpp"
+#include "overlapmanager.hpp"
+#include "physicsmanager.hpp"
 #include "utils.hpp"
 
 #include <entt/entt.hpp>
@@ -27,11 +28,14 @@ void Application::run() {
     m_data.registry.emplace<HAR::Component::Color>(entityCircle, glm::vec4(0.f, 0.f, 0.f, 1.f));
     m_data.registry.emplace<HAR::Component::Circle>(entityCircle, 0.07f);
     m_data.registry.emplace<HAR::Component::Location>(entityCircle, glm::vec2(0.f, 0.f));
-    m_data.registry.emplace<HAR::Component::Overlap>(entityCircle, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapCheckResult>());
+    m_data.registry.emplace<HAR::Component::Overlap>(entityCircle, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>());
+    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityCircle, 1.f);
+    m_data.registry.emplace<HAR::Component::ControlledMovement>(entityCircle, glm::vec2(0.f, 0.f));
     m_data.registry.emplace<HAR::Component::Movement>(entityCircle,
         .0001f,
+        .004f,
         .001f,
-        0.9988f,
+        .001f,
         glm::vec2(0.f, 0.f),
         glm::vec2(0.f, 0.f)
     );
@@ -39,8 +43,9 @@ void Application::run() {
     auto entityPolyhedron = m_data.registry.create();
     m_data.registry.emplace<HAR::Component::Renderable>(entityPolyhedron, true);
     m_data.registry.emplace<HAR::Component::Color>(entityPolyhedron, glm::vec4(1.f, 0.f, 0.f, 1.f));
-    m_data.registry.emplace<HAR::Component::Overlap>(entityPolyhedron, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapCheckResult>());
+    m_data.registry.emplace<HAR::Component::Overlap>(entityPolyhedron, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>());
     m_data.registry.emplace<HAR::Component::Location>(entityPolyhedron, glm::vec2(-0.7f, 0.3f));
+    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityPolyhedron, 10.f);
     m_data.registry.emplace<HAR::Component::Polyhedron>(entityPolyhedron, std::vector<glm::vec2>{
         glm::vec2(-0.3f, -0.2f),
         glm::vec2(-0.2f, 0.3f),
@@ -74,8 +79,9 @@ void Application::run() {
 
 
     m_data.managers.emplace_back(std::make_unique<InputManager>(m_data.registry))->init();
+    m_data.managers.emplace_back(std::make_unique<MovementManager>(m_data.registry))->init();
     m_data.managers.emplace_back(std::make_unique<OverlapManager>(m_data.registry))->init();
-    // m_data.managers.emplace_back(std::make_unique<MovementManager>(m_data.registry))->init();
+    m_data.managers.emplace_back(std::make_unique<PhysicsManager>(m_data.registry))->init();
     m_data.managers.emplace_back(std::make_unique<RenderManager>(m_data.registry))->init();
     
     emscripten_set_main_loop_arg(Application::mainLoop, &m_data, 0, 1);

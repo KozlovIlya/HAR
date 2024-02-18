@@ -20,28 +20,35 @@ struct Movement {
     float acceleration;
     float maxSpeed;
     float inertiaFactor;
-    // bool  bDynamic;
+    float speedLossFactor;
+
     glm::vec2 velocity;
-    glm::vec2 direction;
+    glm::vec2 intertia;
 };
 
-struct Mass {
-    float value;
+struct ControlledMovement {
+    glm::vec2 value;
 };
 
 struct Overlap {
-    struct OverlapCheckResult {
-        std::vector<glm::vec2> overlapPoints;
+    struct OverlapInfo {
+        std::vector<glm::vec2>   overlapPoints;
         std::optional<glm::vec2> touchPoint;
-        std::optional<float> timeSinceTouch;
-        bool bFullOverlap;
+        std::optional<float>     timeSinceTouch;
+        bool                     bFullOverlap;
+        
+        OverlapInfo() :
+            bFullOverlap(false),
+            timeSinceTouch(std::nullopt),
+            touchPoint(std::nullopt),
+            overlapPoints() {
+        }
     };
-
-    std::unordered_map<entt::entity, OverlapCheckResult> overlapCheckResultMap;
+    std::unordered_map<entt::entity, OverlapInfo> overlapInfoMap;
 };
 
 struct PhysicalBody {
-    float hitEnergyMultiplier;
+    float hitPower;
 };
 
 }
