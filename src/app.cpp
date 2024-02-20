@@ -9,10 +9,13 @@
 #include "movementmanager.hpp"
 #include "overlapmanager.hpp"
 #include "physicsmanager.hpp"
+#include "aimanager.hpp"
+
 #include "utils.hpp"
 
 #include <entt/entt.hpp>
-
+#include <entt/entity/fwd.hpp>
+#include <glm/glm.hpp>
 #include <emscripten/emscripten.h>
 #include <emscripten/html5.h>
 #include <functional>
@@ -30,15 +33,50 @@ void Application::run() {
     m_data.registry.emplace<HAR::Component::Location>(entityCircle, glm::vec2(0.f, 0.f));
     m_data.registry.emplace<HAR::Component::Overlap>(entityCircle, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>());
     m_data.registry.emplace<HAR::Component::PhysicalBody>(entityCircle, 1.f);
-    m_data.registry.emplace<HAR::Component::ControlledMovement>(entityCircle, glm::vec2(0.f, 0.f));
+    m_data.registry.emplace<HAR::Component::Controlled>(entityCircle, glm::vec2(0.f, 0.f));
+    m_data.registry.emplace<HAR::Component::Player>(entityCircle);
     m_data.registry.emplace<HAR::Component::Movement>(entityCircle,
         .0001f,
-        .004f,
-        .001f,
-        .001f,
+        .002f,
+        .01f,
+        .01f,
         glm::vec2(0.f, 0.f),
         glm::vec2(0.f, 0.f)
     );
+
+    auto entityEnemy = m_data.registry.create();
+    m_data.registry.emplace<HAR::Component::Renderable>(entityEnemy, true);
+    m_data.registry.emplace<HAR::Component::Circle>(entityEnemy, 0.07f);
+    m_data.registry.emplace<HAR::Component::Color>(entityEnemy, glm::vec4(0.f, 1.f, 0.f, 1.f));
+    m_data.registry.emplace<HAR::Component::Location>(entityEnemy, glm::vec2(0.3f, 0.3f));
+    m_data.registry.emplace<HAR::Component::Overlap>(entityEnemy, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>());
+    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityEnemy, 1.f);
+    m_data.registry.emplace<HAR::Component::Controlled>(entityEnemy, glm::vec2(0.f, 0.f));
+    m_data.registry.emplace<HAR::Component::Movement>(entityEnemy,
+    .00002f,
+    .001f,
+    .00001f,
+    .00001f,
+    glm::vec2(0.f, 0.f),
+    glm::vec2(0.f, 0.f)
+    );
+    m_data.registry.emplace<HAR::Component::AI>(entityEnemy, [&](entt::registry& registry, const entt::entity& entity, float deltaTime) {
+        if (!!!registry.all_of<HAR::Component::Location, HAR::Component::AI, HAR::Component::Controlled>(entity)) [[unlikely]] {
+            return;
+        }
+        auto& aiLocationComp = registry.get<HAR::Component::Location>(entity);
+        auto& aiControlledComp = registry.get<HAR::Component::Controlled>(entity);
+        auto view = registry.view<HAR::Component::Location, HAR::Component::Player>();
+        for (auto& playerEntity : view) {
+            auto& playerlocationComp = registry.get<HAR::Component::Location>(playerEntity);
+            auto direction = glm::normalize(playerlocationComp.value - aiLocationComp.value);
+            aiControlledComp.movementDir = direction;
+            return;
+        }
+    });
+
+
+
 
     auto entityPolyhedron = m_data.registry.create();
     m_data.registry.emplace<HAR::Component::Renderable>(entityPolyhedron, true);
@@ -68,17 +106,8 @@ void Application::run() {
         glm::vec2(0.0f, -0.4f)
     }, 0.07f));
 
-    // auto entityCircle2 = m_data.registry.create();
-    // m_data.registry.emplace<HAR::Component::Renderable>(entityCircle2, true);
-    // m_data.registry.emplace<HAR::Component::Circle>(entityCircle2, 0.32f);
-    // m_data.registry.emplace<HAR::Component::Color>(entityCircle2, glm::vec4(1.f, 0.f, 0.f, 1.f));
-    // m_data.registry.emplace<HAR::Component::Location>(entityCircle2, glm::vec2(-0.7f, 0.3f));
-    // m_data.registry.emplace<HAR::Component::Overlap>(entityCircle2, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapCheckResult>());
-    
-
-
-
     m_data.managers.emplace_back(std::make_unique<InputManager>(m_data.registry))->init();
+    m_data.managers.emplace_back(std::make_unique<AIManager>(m_data.registry))->init();
     m_data.managers.emplace_back(std::make_unique<MovementManager>(m_data.registry))->init();
     m_data.managers.emplace_back(std::make_unique<OverlapManager>(m_data.registry))->init();
     m_data.managers.emplace_back(std::make_unique<PhysicsManager>(m_data.registry))->init();

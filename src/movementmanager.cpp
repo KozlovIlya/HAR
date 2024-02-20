@@ -17,8 +17,8 @@ void MovementManager::tick(float deltaTime) {
 
         // Получаем направление управления, если есть
         glm::vec2 controlDirection = glm::vec2(0.0f, 0.0f);
-        if (m_registry.all_of<HAR::Component::ControlledMovement>(entity)) {
-            controlDirection = m_registry.get<HAR::Component::ControlledMovement>(entity).value;
+        if (m_registry.all_of<HAR::Component::Controlled>(entity)) {
+            controlDirection = m_registry.get<HAR::Component::Controlled>(entity).movementDir;
             if (glm::length(controlDirection) > 0.0f) {
                 controlDirection = glm::normalize(controlDirection);
             }

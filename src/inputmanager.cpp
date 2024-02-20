@@ -21,9 +21,9 @@ void InputManager::init() {
 }
 
 void InputManager::tick(float deltaTime) {
-    auto view = m_registry.view<HAR::Component::ControlledMovement>();
+    auto view = m_registry.view<HAR::Component::Controlled, HAR::Component::Player>();
     for (auto entity : view) {
-        auto& controlledMovement = view.get<HAR::Component::ControlledMovement>(entity).value;
+        auto& controlledMovement = view.get<HAR::Component::Controlled>(entity).movementDir;
         auto updatedDiretion = glm::vec2(0.f,0.f);
         if (m_up) updatedDiretion.y += 1;
         if (m_down) updatedDiretion.y -= 1;

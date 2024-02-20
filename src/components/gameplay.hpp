@@ -8,15 +8,20 @@
 #include <optional>
 #include <unordered_set>
 #include <vector>
+#include <any>
 
 
 namespace HAR::Component {
+
+using ComponentTickFunction = std::function<void(entt::registry&, const entt::entity&, float)>;
+
 
 struct Location {
     glm::vec2 value;
 };
 
 struct Movement {
+
     float acceleration;
     float maxSpeed;
     float inertiaFactor;
@@ -26,8 +31,9 @@ struct Movement {
     glm::vec2 intertia;
 };
 
-struct ControlledMovement {
-    glm::vec2 value;
+struct Controlled {
+    glm::vec2 movementDir;
+
 };
 
 struct Overlap {
@@ -51,4 +57,11 @@ struct PhysicalBody {
     float hitPower;
 };
 
+struct Player {
+};
+
+struct AI {
+    ComponentTickFunction tick;
+    std::any data;
+};
 }
