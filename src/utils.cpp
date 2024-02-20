@@ -1,7 +1,15 @@
 #include "utils.hpp"
 
+#include <any>
 #include <glm/glm.hpp>
 #include <iostream>
+
+#include "components/gameplay.hpp"
+#include "components/geometry.hpp"
+#include "point.h"
+
+#include <path_finder.h>
+#include <polygon.h>
 
 std::vector<glm::vec2> HAR::Math::InflatePolygon(const std::vector<glm::vec2>& vertices, float radius) {
     std::vector<glm::vec2> inflatedVertices;
@@ -41,3 +49,40 @@ std::optional<glm::vec2> HAR::Math::getIntersection(
     return {}; // Отрезки не пересекаются
 }
 
+void HAR::AI::chasePlayer(entt::registry& registry, const entt::entity& entity, float deltaTime) {
+    // if (!registry.all_of<HAR::Component::Location, HAR::Component::AI, HAR::Component::Controlled>(entity)) {
+    //     return;
+    // }
+
+    // auto& aiLocationComp = registry.get<HAR::Component::Location>(entity);
+    // auto& aiControlledComp = registry.get<HAR::Component::Controlled>(entity);
+    // auto& aiComp = registry.get<HAR::Component::AI>(entity);
+    
+    // auto pathFinder = std::any_cast<NavMesh::PathFinder*>(aiComp.data);
+    // if (!pathFinder) {
+    //     return;
+    // }
+
+    // std::vector<NavMesh::Polygon> polygons_to_add;
+    // auto polygonView = registry.view<HAR::Component::Location, HAR::Component::PhysicalBody, HAR::Component::Polyhedron>();
+    // for (auto& polygonEntity : polygonView) {
+    //     NavMesh::Polygon polygon;
+    //     auto& polygonLocationComp = polygonView.get<HAR::Component::Location>(polygonEntity);
+    //     auto& polygonPolyhedronComp = polygonView.get<HAR::Component::Polyhedron>(polygonEntity);
+    //     for (auto& vertex : polygonPolyhedronComp.vertices) {
+    //         NavMesh::Point point(vertex.x * 10, vertex.y * 10, 0.0f);
+    //         // polygon.AddPoint(vertex.x, vertex.y, 0.0f);
+    //     }
+
+    //     polygons_to_add.push_back(NavMesh::Polygon(polygonPolyhedronComp.vertices));
+    //     pathFinder->AddPolygons(polygons_to_add, 0);
+    // }
+    // pathFinder->AddPolygons(const std::vector<Polygon> &polygons_to_add, int inflate_by)
+
+    // auto view = registry.view<HAR::Component::Location, HAR::Component::Player>();
+    // for (auto& playerEntity : view) {
+    //     auto& playerlocationComp = registry.get<HAR::Component::Location>(playerEntity);
+    //     auto direction = glm::normalize(playerlocationComp.value - aiLocationComp.value);
+    //     aiControlledComp.movementDir = direction;
+    // }
+}
