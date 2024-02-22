@@ -13,10 +13,16 @@
 void OverlapManager::tick(float deltaTime) {
     auto view = m_registry.view<HAR::Component::Location, HAR::Component::Overlap>();
     for (auto& entity1 : view) {
+        auto& overlapComp1 = m_registry.get<HAR::Component::Overlap>(entity1);
+        overlapComp1.overlapInfoMap.clear();
         for (auto& entity2 : view) {
+            auto& overlapComp2 = m_registry.get<HAR::Component::Overlap>(entity2);
+
             if (entity1 == entity2 || entity1 > entity2) {
                 continue;
             }
+            overlapComp2.overlapInfoMap.clear();
+
             auto& loc1 = m_registry.get<HAR::Component::Location>(entity1);
             auto& loc2 = m_registry.get<HAR::Component::Location>(entity2);
             auto futureLoc1 = loc1.value; 
@@ -24,7 +30,6 @@ void OverlapManager::tick(float deltaTime) {
             if (m_registry.all_of<HAR::Component::Movement>(entity1)) {
                 auto& movement = m_registry.get<HAR::Component::Movement>(entity1);
                 futureLoc1 += movement.velocity * deltaTime;
-
             }
 
             if (m_registry.all_of<HAR::Component::Movement>(entity2)) {
@@ -34,12 +39,11 @@ void OverlapManager::tick(float deltaTime) {
 
             auto overlapInfo = findOverlap(entity1, entity2, loc1.value, loc2.value, futureLoc1, futureLoc2, deltaTime);   
             if (overlapInfo.touchPoint.has_value() || overlapInfo.bFullOverlap || overlapInfo.overlapPoints.size() > 0) {
-                auto& overlapComp1 = m_registry.get<HAR::Component::Overlap>(entity1);
                 overlapComp1.overlapInfoMap.emplace(entity2, overlapInfo);
-                std::cout << overlapComp1.overlapInfoMap.size();
-                auto& overlapComp2 = m_registry.get<HAR::Component::Overlap>(entity2);
                 overlapComp2.overlapInfoMap.emplace(entity1, overlapInfo);
-                std::cout << overlapComp2.overlapInfoMap.size();
+                std::cout << "overlap1 size: " << overlapComp1.overlapInfoMap.size() << std::endl <<
+                    "overlap2 size: " << overlapComp2.overlapInfoMap.size() << std::endl;
+                std::cout << "Overlap detected between " << std::endl;
             }
         }
     }

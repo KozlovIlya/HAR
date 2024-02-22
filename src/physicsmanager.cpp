@@ -19,16 +19,16 @@ void PhysicsManager::tick(float deltaTime) {
 
         if (m_registry.all_of<HAR::Component::PhysicalBody, HAR::Component::Overlap>(entity)) {
             auto& overlapComp = m_registry.get<HAR::Component::Overlap>(entity);
+            std::cout << "Overlap size: " << overlapComp.overlapInfoMap.size() << std::endl;
             auto& physicalBodyComp = m_registry.get<HAR::Component::PhysicalBody>(entity);
-            if (!overlapComp.overlapInfoMap.empty()) {
+            if (!!!overlapComp.overlapInfoMap.empty()) {
                 for (auto& [overlapsEntity, overlapInfo] : overlapComp.overlapInfoMap) {
-                    if (overlapInfo.touchPoint.has_value()) {
+                    if (m_registry.all_of<HAR::Component::PhysicalBody>(overlapsEntity) && overlapInfo.touchPoint.has_value()) {
                         glm::vec2 collisionNormal = glm::normalize(location.value - overlapInfo.touchPoint.value());
                         movementComp.velocity = glm::reflect(movementComp.velocity, collisionNormal) * physicalBodyComp.hitPower;
                         futureLocation = overlapInfo.touchPoint.value() + collisionNormal * (glm::length(overlapInfo.touchPoint.value() - location.value) + 0.01f);
                     }
                 }
-                overlapComp.overlapInfoMap.clear();
             }
         }
         location.value = futureLocation;

@@ -10,6 +10,7 @@
 #include "overlapmanager.hpp"
 #include "physicsmanager.hpp"
 #include "aimanager.hpp"
+#include "gamemanager.hpp"
 
 #include "utils.hpp"
 
@@ -70,7 +71,7 @@ void Application::run() {
         for (auto& playerEntity : view) {
             auto& playerlocationComp = registry.get<HAR::Component::Location>(playerEntity);
             auto direction = glm::normalize(playerlocationComp.value - aiLocationComp.value);
-            aiControlledComp.movementDir = direction;
+            // aiControlledComp.movementDir = direction;
             return;
         }
     });
@@ -111,6 +112,7 @@ void Application::run() {
     m_data.managers.emplace_back(std::make_unique<MovementManager>(m_data.registry))->init();
     m_data.managers.emplace_back(std::make_unique<OverlapManager>(m_data.registry))->init();
     m_data.managers.emplace_back(std::make_unique<PhysicsManager>(m_data.registry))->init();
+    m_data.managers.emplace_back(std::make_unique<GameManager>(m_data.registry))->init();
     m_data.managers.emplace_back(std::make_unique<RenderManager>(m_data.registry))->init();
     
     emscripten_set_main_loop_arg(Application::mainLoop, &m_data, 0, 1);
