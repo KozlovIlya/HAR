@@ -17,12 +17,9 @@ void OverlapManager::tick(float deltaTime) {
         overlapComp1.overlapInfoMap.clear();
         for (auto& entity2 : view) {
             auto& overlapComp2 = m_registry.get<HAR::Component::Overlap>(entity2);
-
-            if (entity1 == entity2 || entity1 > entity2) {
+            if (entity1 == entity2 || overlapComp1.overlapInfoMap.find(entity2) != overlapComp1.overlapInfoMap.end()) {
                 continue;
             }
-            overlapComp2.overlapInfoMap.clear();
-
             auto& loc1 = m_registry.get<HAR::Component::Location>(entity1);
             auto& loc2 = m_registry.get<HAR::Component::Location>(entity2);
             auto futureLoc1 = loc1.value; 
@@ -41,9 +38,6 @@ void OverlapManager::tick(float deltaTime) {
             if (overlapInfo.touchPoint.has_value() || overlapInfo.bFullOverlap || overlapInfo.overlapPoints.size() > 0) {
                 overlapComp1.overlapInfoMap.emplace(entity2, overlapInfo);
                 overlapComp2.overlapInfoMap.emplace(entity1, overlapInfo);
-                std::cout << "overlap1 size: " << overlapComp1.overlapInfoMap.size() << std::endl <<
-                    "overlap2 size: " << overlapComp2.overlapInfoMap.size() << std::endl;
-                std::cout << "Overlap detected between " << std::endl;
             }
         }
     }

@@ -17,6 +17,14 @@ void GameManager::tick(float deltaTime) {
     for (auto& [entity, overlapInfo] : overlapComp.overlapInfoMap) {
         if (m_registry.all_of<HAR::Component::Player>(entity)) {
             m_score++;
+            auto enemiesView = m_registry.view<HAR::Component::AI>();
+            for (auto& enemyEntity : enemiesView) {
+                if (m_registry.all_of<HAR::Component::Movement>(enemyEntity)) {
+                    auto& movement = m_registry.get<HAR::Component::Movement>(enemyEntity);
+                    movement.maxSpeed += 0.00001f;
+                    movement.acceleration += 0.00001f;
+                }
+            }
             moveCollectible();
             std::cout << "Score: " << m_score << std::endl;
             break;

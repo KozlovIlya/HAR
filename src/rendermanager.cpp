@@ -50,6 +50,10 @@ void RenderManager::tick(float deltaTime) {
 
     auto view = m_registry.view<HAR::Component::Renderable, HAR::Component::Location>();
     for (auto entity: view) {
+        auto renderable = view.get<HAR::Component::Renderable>(entity);
+        if (!!!renderable.visible) {
+            continue;
+        }
         renderEntity(entity);
     }
 

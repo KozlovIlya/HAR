@@ -19,7 +19,6 @@ void PhysicsManager::tick(float deltaTime) {
 
         if (m_registry.all_of<HAR::Component::PhysicalBody, HAR::Component::Overlap>(entity)) {
             auto& overlapComp = m_registry.get<HAR::Component::Overlap>(entity);
-            std::cout << "Overlap size: " << overlapComp.overlapInfoMap.size() << std::endl;
             auto& physicalBodyComp = m_registry.get<HAR::Component::PhysicalBody>(entity);
             if (!!!overlapComp.overlapInfoMap.empty()) {
                 for (auto& [overlapsEntity, overlapInfo] : overlapComp.overlapInfoMap) {
