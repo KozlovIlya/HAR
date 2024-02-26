@@ -55,6 +55,8 @@ void RenderManager::tick(float deltaTime) {
             continue;
         }
         renderEntity(entity);
+
+        
     }
 
     finalizeRendering();

@@ -1,6 +1,7 @@
 #include "overlapmanager.hpp"
 
 #include "components/geometry.hpp"
+#include "components/gameplay.hpp"
 #include "utils.hpp"
 
 #include <entt/entt.hpp>
@@ -8,6 +9,7 @@
 #include <glm/ext/vector_float2.hpp>
 
 #include <iostream>
+#include <memory>
 #include <optional>
 
 void OverlapManager::tick(float deltaTime) {
@@ -38,6 +40,23 @@ void OverlapManager::tick(float deltaTime) {
             if (overlapInfo.touchPoint.has_value() || overlapInfo.bFullOverlap || overlapInfo.overlapPoints.size() > 0) {
                 overlapComp1.overlapInfoMap.emplace(entity2, overlapInfo);
                 overlapComp2.overlapInfoMap.emplace(entity1, overlapInfo);
+            }
+        }
+    }
+    for (auto& entity : view) {
+        auto& overlapComp = m_registry.get<HAR::Component::Overlap>(entity);
+        for (auto& [overlapsEntity, overlapInfo] : overlapComp.overlapInfoMap) {
+            if (overlapInfo.touchPoint.has_value() && overlapInfo.timeSinceTouch.has_value() && overlapInfo.timeSinceTouch.value() <= deltaTime &&
+                overlapComp.OnOverlapBegin.has_value()) {
+                (*overlapComp.OnOverlapBegin)(m_registry, entity);
+            }
+            else {
+                if (overlapComp.OnOverlapEnd.has_value()) {
+                    (*overlapComp.OnOverlapEnd)(m_registry, entity);
+                }
+            }
+            if (overlapComp.OnOverlapUpdate.has_value()) {
+                (*overlapComp.OnOverlapUpdate)(m_registry, entity, deltaTime);
             }
         }
     }

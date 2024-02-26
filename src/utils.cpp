@@ -86,3 +86,38 @@ void HAR::AI::chasePlayer(entt::registry& registry, const entt::entity& entity, 
     //     aiControlledComp.movementDir = direction;
     // }
 }
+
+void HAR::Collision::pushCollidedComponents(entt::registry& registry, const entt::entity& entity) {
+        auto view = registry.view<HAR::Component::Movement, HAR::Component::Location>();
+    for (auto& entity : view) {
+        auto& location = view.get<HAR::Component::Location>(entity);
+        auto& movementComp = view.get<HAR::Component::Movement>(entity);
+        auto futureLocation = location.value + movementComp.velocity * 0.1f;
+
+        if (registry.all_of<HAR::Component::PhysicalBody, HAR::Component::Overlap>(entity)) {
+            auto& overlapComp = registry.get<HAR::Component::Overlap>(entity);
+            auto& physicalBodyComp = registry.get<HAR::Component::PhysicalBody>(entity);
+            if (!!!overlapComp.overlapInfoMap.empty()) {
+                for (auto& [overlapsEntity, overlapInfo] : overlapComp.overlapInfoMap) {
+                    if (registry.all_of<HAR::Component::PhysicalBody>(overlapsEntity) && overlapInfo.touchPoint.has_value()) {
+                        glm::vec2 collisionNormal = glm::normalize(location.value - overlapInfo.touchPoint.value());
+                        movementComp.velocity = glm::reflect(movementComp.velocity, collisionNormal) * physicalBodyComp.hitPower;
+                        futureLocation = overlapInfo.touchPoint.value() + collisionNormal * (glm::length(overlapInfo.touchPoint.value() - location.value) + 0.01f);
+                    }
+                }
+            }
+        }
+        location.value = futureLocation;
+    }
+}
+
+template <typename T>
+void HAR::Effect::applyEffect(const EffectData &effectData, entt::registry &registry, const entt::entity &entity) {
+    if (registry.all_of<HAR::Component::EffectBag>(entity)) [[likely]] {
+        auto& effectBag = registry.get<HAR::Component::EffectBag>(entity);
+        effectBag.effectsList.push_back(std::make_shared<T>(registry, entity, effectData));
+    }
+    else {
+        // TODO: Add logging
+    }
+}

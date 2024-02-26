@@ -11,9 +11,11 @@
 #include "overlapmanager.hpp"
 #include "physicsmanager.hpp"
 #include "aimanager.hpp"
+#include "effectsmanager.h"
 #include "gamemanager.hpp"
 
 #include "utils.hpp"
+#include "effects/barriercollisioneffect.hpp"
 
 #include <any>
 #include <entt/entt.hpp>
@@ -23,6 +25,7 @@
 #include <emscripten/html5.h>
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <stdlib.h>
 #include <unordered_map>
 
@@ -39,6 +42,7 @@ void Application::run() {
     m_data.registry.emplace<HAR::Component::PhysicalBody>(entityCircle, 1.f);
     m_data.registry.emplace<HAR::Component::Controlled>(entityCircle, glm::vec2(0.f, 0.f));
     m_data.registry.emplace<HAR::Component::Player>(entityCircle);
+    m_data.registry.emplace<HAR::Component::EffectBag>(entityCircle, std::list<std::shared_ptr<Effect>>());
     m_data.registry.emplace<HAR::Component::Movement>(entityCircle,
         .0001f,
         .002f,
@@ -56,6 +60,7 @@ void Application::run() {
     m_data.registry.emplace<HAR::Component::Overlap>(entityEnemy, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>());
     m_data.registry.emplace<HAR::Component::PhysicalBody>(entityEnemy, 1.f);
     m_data.registry.emplace<HAR::Component::Controlled>(entityEnemy, glm::vec2(0.f, 0.f));
+    m_data.registry.emplace<HAR::Component::EffectBag>(entityEnemy, std::list<std::shared_ptr<Effect>>());
     m_data.registry.emplace<HAR::Component::Movement>(entityEnemy,
     .000001f,
     .0001f,
@@ -115,7 +120,6 @@ void Application::run() {
 
             if (enemyCanSeePlayer) {
                 targetLocation = playerlocationComp.value;
-                std::cout << "Location: " << targetLocation.x << ", " << targetLocation.y << std::endl;
                 break;
             }
         }
@@ -128,7 +132,23 @@ void Application::run() {
     auto entityPolyhedron = m_data.registry.create();
     m_data.registry.emplace<HAR::Component::Renderable>(entityPolyhedron, true);
     m_data.registry.emplace<HAR::Component::Color>(entityPolyhedron, glm::vec4(1.f, 0.f, 0.f, 1.f));
-    m_data.registry.emplace<HAR::Component::Overlap>(entityPolyhedron, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>());
+    m_data.registry.emplace<HAR::Component::Overlap>(entityPolyhedron, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>(), [&](entt::registry& registry, entt::entity entity) {
+        // HAR::Collision::pushCollidedComponents(registry, entity);
+        BarrierCollisionEffectData data;
+        data.acceleration = 0.00001f;
+        data.accelerationLossFactor = 0.0f;
+        data.ownAccelerationPenalty = 0.0f;
+        data.ownAcelerationPenaltyLooseFactor = 0.0f;
+        data.duration = 1000.f;
+        // HAR::Effect::applyEffect<BarrierCollisionEffect>(data, registry, entity);
+        for (auto& [colidedEntity, overlapInfo] : registry.get<HAR::Component::Overlap>(entity).overlapInfoMap) {
+            if (registry.all_of<HAR::Component::EffectBag>(colidedEntity)) {
+                auto& effectBag = registry.get<HAR::Component::EffectBag>(colidedEntity);
+                BarrierCollisionEffect effect(registry, colidedEntity, data);
+                effectBag.effectsList.push_back(std::make_shared<BarrierCollisionEffect>(effect));
+            }
+        }
+    });
     m_data.registry.emplace<HAR::Component::Location>(entityPolyhedron, glm::vec2(-0.7f, 0.3f));
     m_data.registry.emplace<HAR::Component::PhysicalBody>(entityPolyhedron, 10.f);
     m_data.registry.emplace<HAR::Component::Polyhedron>(entityPolyhedron, std::vector<glm::vec2>{
@@ -157,8 +177,9 @@ void Application::run() {
     m_data.managers.emplace_back(std::make_unique<AIManager>(m_data.registry))->init();
     m_data.managers.emplace_back(std::make_unique<MovementManager>(m_data.registry))->init();
     m_data.managers.emplace_back(std::make_unique<OverlapManager>(m_data.registry))->init();
-    m_data.managers.emplace_back(std::make_unique<PhysicsManager>(m_data.registry))->init();
     m_data.managers.emplace_back(std::make_unique<GameManager>(m_data.registry))->init();
+    m_data.managers.emplace_back(std::make_unique<EffectsManager>(m_data.registry))->init();
+    m_data.managers.emplace_back(std::make_unique<PhysicsManager>(m_data.registry))->init();
     m_data.managers.emplace_back(std::make_unique<RenderManager>(m_data.registry))->init();
     
     emscripten_set_main_loop_arg(Application::mainLoop, &m_data, 0, 1);

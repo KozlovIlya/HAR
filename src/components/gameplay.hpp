@@ -1,8 +1,16 @@
 #pragma once
 
-#include <entt/entity/fwd.hpp>
+#include "../effects/effect.hpp"
+
 #include <glm/ext/vector_float2.hpp>
 
+#include <entt/entity/entity.hpp>
+#include <entt/entity/registry.hpp>
+#include <entt/entity/fwd.hpp>
+
+#include <list>
+#include <memory>
+#include <set>
 #include <unordered_map>
 #include <functional>
 #include <optional>
@@ -12,9 +20,6 @@
 
 
 namespace HAR::Component {
-
-using ComponentTickFunction = std::function<void(entt::registry&, const entt::entity&, float)>;
-
 
 struct Location {
     glm::vec2 value;
@@ -42,6 +47,7 @@ struct Overlap {
         std::optional<glm::vec2> touchPoint;
         std::optional<float>     timeSinceTouch;
         bool                     bFullOverlap;
+        bool                     bWasOverlaping;
         
         OverlapInfo() :
             bFullOverlap(false),
@@ -50,18 +56,34 @@ struct Overlap {
             overlapPoints() {
         }
     };
+    bool isOverlapping() const {
+        return !overlapInfoMap.empty();
+    }
     std::unordered_map<entt::entity, OverlapInfo> overlapInfoMap;
+
+    std::optional<std::function<void(entt::registry&, const entt::entity&)>> OnOverlapBegin;
+    std::optional<std::function<void(entt::registry&, const entt::entity&)>> OnOverlapEnd;
+
+    std::optional<std::function<void(entt::registry&, const entt::entity&, float)>> OnOverlapUpdate;
+
+    std::any data;
 };
 
 struct PhysicalBody {
     float hitPower;
 };
 
+struct EffectBag {
+    std::list<std::shared_ptr<Effect>> effectsList;
+};
+
 struct Player {
 };
 
+
 struct AI {
-    ComponentTickFunction tick;
+    std::function<void(entt::registry&, const entt::entity&, float)> tick;
     std::any data;
 };
+
 }
