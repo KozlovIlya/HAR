@@ -42,7 +42,6 @@ void BarrierCollisionEffect::update(float deltaTime) {
     } else {
         m_status = Status::Finished;
     }
-    std::cout << m_timer << " " << deltaTime << std::endl;
 
     auto& movement = m_registry.get<HAR::Component::Movement>(m_entity);
     

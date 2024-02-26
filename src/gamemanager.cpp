@@ -22,6 +22,7 @@ void GameManager::tick(float deltaTime) {
     auto playerView = m_registry.view<HAR::Component::Player>();
     for (auto& playerEntity : playerView) {
         auto& player = m_registry.get<HAR::Component::Player>(playerEntity);
+        std::cout << "Player score: " << player.score << std::endl;
         auto enemyView = m_registry.view<HAR::Component::AI, HAR::Component::Movement>();
         for (auto& enemyEntity : enemyView) {
             auto& movement = m_registry.get<HAR::Component::Movement>(enemyEntity);
