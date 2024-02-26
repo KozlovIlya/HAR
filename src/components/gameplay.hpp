@@ -37,6 +37,7 @@ struct Movement {
     glm::vec2 intertia;
 };
 
+// TODO: Bad solution. Replace with Effect
 struct PendingMovement {
     glm::vec2 velocity;
 };

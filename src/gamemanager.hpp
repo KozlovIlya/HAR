@@ -13,7 +13,7 @@
 #include <vector>
 
 
-const std::vector<glm::vec2> possibleSpawnLocation = {
+const std::vector<glm::vec2> possibleSpawnLocations = {
         glm::vec2(.4f, .4f),
         glm::vec2(.8f, 0.5f),
         glm::vec2(-.9f, .0f),
@@ -30,6 +30,7 @@ public:
     virtual void init() override;
 protected:
     void moveCollectible();
+    glm::vec2 getRandomLocationWithNoise();
 protected:
     entt::entity m_collectible;
     entt::entity m_player;

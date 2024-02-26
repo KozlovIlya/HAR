@@ -150,7 +150,7 @@ void Application::run() {
     m_data.registry.emplace<HAR::Component::Overlap>(entityLeftBorder, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>(), [&](entt::registry& registry, entt::entity entity) {
         HAR::Collision::pushCollidedComponents(registry, entity);
     });
-    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityLeftBorder, .11f);
+    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityLeftBorder, 1.23f);
 
     auto entityRightBorder = m_data.registry.create();
     m_data.registry.emplace<HAR::Component::Renderable>(entityRightBorder, true);
@@ -165,7 +165,7 @@ void Application::run() {
     m_data.registry.emplace<HAR::Component::Overlap>(entityRightBorder, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>(), [&](entt::registry& registry, entt::entity entity) {
         HAR::Collision::pushCollidedComponents(registry, entity);
     });
-    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityRightBorder, .11f);
+    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityRightBorder, 1.23f);
 
     auto entityTopBorder = m_data.registry.create();
     m_data.registry.emplace<HAR::Component::Renderable>(entityTopBorder, true);
@@ -180,7 +180,7 @@ void Application::run() {
     m_data.registry.emplace<HAR::Component::Overlap>(entityTopBorder, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>(), [&](entt::registry& registry, entt::entity entity) {
         HAR::Collision::pushCollidedComponents(registry, entity);
     });
-    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityTopBorder, .11f);
+    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityTopBorder, 1.23f);
 
 
     auto entityBottomBorder = m_data.registry.create();
@@ -196,7 +196,7 @@ void Application::run() {
     m_data.registry.emplace<HAR::Component::Overlap>(entityBottomBorder, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>(), [&](entt::registry& registry, entt::entity entity) {
         HAR::Collision::pushCollidedComponents(registry, entity);
     });
-    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityBottomBorder, .11f);
+    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityBottomBorder, 1.23f);
 
 
 
@@ -220,7 +220,7 @@ void Application::run() {
         // }
     });
     m_data.registry.emplace<HAR::Component::Location>(entityObstacleDefault, glm::vec2(-0.1f, 0.5f));
-    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityObstacleDefault, .11f);
+    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityObstacleDefault, 1.23f);
     m_data.registry.emplace<HAR::Component::Polyhedron>(entityObstacleDefault, std::vector<glm::vec2>{
         glm::vec2(-0.1f, -0.17f),
         glm::vec2(-0.7f, 0.35f),
@@ -237,7 +237,7 @@ void Application::run() {
         HAR::Collision::pushCollidedComponents(registry, entity);
     });
     m_data.registry.emplace<HAR::Component::Location>(entityObstacleBig, glm::vec2(.7f, -.7f));
-    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityObstacleBig, .11f);
+    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityObstacleBig, 1.23f);
     m_data.registry.emplace<HAR::Component::Polyhedron>(entityObstacleBig, std::vector<glm::vec2>{
         glm::vec2(-0.7f, -0.09f),
         glm::vec2(-0.2f, 0.65f),
@@ -257,7 +257,7 @@ void Application::run() {
         HAR::Collision::pushCollidedComponents(registry, entity);
     });
     m_data.registry.emplace<HAR::Component::Location>(entityObstacleOneMore, glm::vec2(-.8f, -.2f));
-    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityObstacleOneMore, .11f);
+    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityObstacleOneMore, 1.23f);
     m_data.registry.emplace<HAR::Component::Polyhedron>(entityObstacleOneMore, std::vector<glm::vec2>{
         glm::vec2(-0.22f, -1.f),
         glm::vec2(0.3f, 0.3f),

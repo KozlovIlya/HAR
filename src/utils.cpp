@@ -49,6 +49,13 @@ std::optional<glm::vec2> HAR::Math::getIntersection(
     return {};
 }
 
+std::mt19937 rng(std::random_device{}());
+
+float HAR::Math::getRandomFloat(float min, float max) {
+    std::uniform_real_distribution<float> dist(min, max);
+    return dist(rng);
+}
+
 void HAR::AI::chasePlayer(entt::registry& registry, const entt::entity& entity, float deltaTime) {
             if (!!!registry.all_of<HAR::Component::Location, HAR::Component::AI, HAR::Component::Controlled>(entity)) [[unlikely]] {
             return;

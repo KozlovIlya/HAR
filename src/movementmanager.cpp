@@ -45,11 +45,8 @@ void MovementManager::tick(float deltaTime) {
         }
 
         movement.velocity = newVelocity;
-        // std::cout << "Velocity: " << movement.velocity.x << " " << movement.velocity.y << std::endl;
     }
 }
-
-
 
 void MovementManager::init() {
     auto view = m_registry.view<HAR::Component::Movement>();

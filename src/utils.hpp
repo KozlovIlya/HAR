@@ -10,9 +10,7 @@
 
 #include <optional>
 #include <vector>
-
-
-
+#include <random>
 
 namespace HAR {
     namespace Math {
@@ -29,6 +27,8 @@ std::vector<glm::vec2> InflatePolygon(const std::vector<glm::vec2>& vertices, fl
 std::optional<glm::vec2> getIntersection(
     const glm::vec2& A, const glm::vec2& B,
     const glm::vec2& C, const glm::vec2& D);
+
+    float getRandomFloat(float min, float max);
     }
 
     namespace AI {

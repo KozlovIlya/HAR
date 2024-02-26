@@ -9,6 +9,7 @@
 #include <glm/glm.hpp>
 
 #include <iostream>
+#include <stdlib.h>
 
 GameManager::GameManager(entt::registry& registry) : Manager(registry), m_collectible(entt::null) {
 }
@@ -52,6 +53,19 @@ void GameManager::init() {
 
 void GameManager::moveCollectible() { 
     auto& location = m_registry.get<HAR::Component::Location>(m_collectible);
+    location.value = getRandomLocationWithNoise();
+};
+
+glm::vec2 GameManager::getRandomLocationWithNoise() {
+    if (possibleSpawnLocations.empty()) {
+        return glm::vec2(0.0f);
+    }
+
     srand(time(0));
-    location.value = possibleSpawnLocation.at(rand() % possibleSpawnLocation.size());
+    glm::vec2 location = possibleSpawnLocations[rand() % possibleSpawnLocations.size() - 1];
+    location.x += HAR::Math::getRandomFloat(-0.05f, 0.05f);
+    location.y += HAR::Math::getRandomFloat(-0.05f, 0.05f);
+    std::cout << "Location: " << location.x << ", " << location.y << std::endl;
+
+    return location;
 }
