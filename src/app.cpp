@@ -82,7 +82,6 @@ void Application::run() {
             if (enemyOverlapComp.overlapInfoMap.find(player) != enemyOverlapComp.overlapInfoMap.end()) {
                 auto& playerComp = registry.get<HAR::Component::Player>(player);
                 playerComp.score /= 2;
-                std::cout << "TOUCH" << std::endl;
             }
         }
     });
@@ -116,7 +115,6 @@ void Application::run() {
             if (enemyOverlapComp.overlapInfoMap.find(player) != enemyOverlapComp.overlapInfoMap.end()) {
                 auto& playerComp = registry.get<HAR::Component::Player>(player);
                 playerComp.score /= 2;
-                std::cout << "TOUCH" << std::endl;
             }
         }
     });

@@ -65,7 +65,6 @@ glm::vec2 GameManager::getRandomLocationWithNoise() {
     glm::vec2 location = possibleSpawnLocations[rand() % possibleSpawnLocations.size() - 1];
     location.x += HAR::Math::getRandomFloat(-0.05f, 0.05f);
     location.y += HAR::Math::getRandomFloat(-0.05f, 0.05f);
-    std::cout << "Location: " << location.x << ", " << location.y << std::endl;
 
     return location;
 }
