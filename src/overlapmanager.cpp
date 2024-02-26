@@ -33,7 +33,7 @@ void OverlapManager::tick(float deltaTime) {
 
             if (m_registry.all_of<HAR::Component::Movement>(entity2)) {
                 auto& movement = m_registry.get<HAR::Component::Movement>(entity2);
-                futureLoc1 += movement.velocity * deltaTime;
+                futureLoc2 += movement.velocity * deltaTime;
             }
 
             auto overlapInfo = findOverlap(entity1, entity2, loc1.value, loc2.value, futureLoc1, futureLoc2, deltaTime);   
@@ -43,6 +43,7 @@ void OverlapManager::tick(float deltaTime) {
             }
         }
     }
+    
     for (auto& entity : view) {
         auto& overlapComp = m_registry.get<HAR::Component::Overlap>(entity);
         for (auto& [overlapsEntity, overlapInfo] : overlapComp.overlapInfoMap) {
@@ -138,7 +139,7 @@ HAR::Component::Overlap::OverlapInfo OverlapManager::findOverlap_Circle_x_Polyhe
     std::optional<glm::vec2> firstIntersection;
 
     HAR::Component::Overlap::OverlapInfo overlapInfo;
-
+    glm::vec2 vertexDirVector = glm::vec2(0.f, 0.f);
     // TODO: Move to collision body
     for (size_t i = 0; i < minkowskiVertices.size(); ++i) {
         glm::vec2 start = minkowskiVertices[i] + potentialLocationB;
@@ -148,6 +149,7 @@ HAR::Component::Overlap::OverlapInfo OverlapManager::findOverlap_Circle_x_Polyhe
         intersection.has_value() && glm::length(intersection.value() - currentLocationA) <= circle.radius) {
             if (!firstIntersection.has_value() || glm::length(intersection.value() - currentLocationA) < glm::length(firstIntersection.value() - currentLocationA)) {
                 firstIntersection = intersection;
+                vertexDirVector = glm::normalize(end - start);
                 break;
             }
         }
@@ -160,8 +162,8 @@ HAR::Component::Overlap::OverlapInfo OverlapManager::findOverlap_Circle_x_Polyhe
         if (totalMovementLength > 0.0f) {
             float timeSinceTouch = (totalMovementLength - distanceToIntersection) / totalMovementLength * deltaTime;
             overlapInfo.timeSinceTouch = std::max(0.0f, deltaTime - timeSinceTouch);
+            overlapInfo.reflectionVector = glm::reflect(-movementVector, vertexDirVector);
         }
-        intersects = true;
     }
 
     return overlapInfo;

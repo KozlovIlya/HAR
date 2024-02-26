@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../effects/effect.hpp"
+#include "glm/ext/quaternion_trigonometric.hpp"
 
 #include <glm/ext/vector_float2.hpp>
 
@@ -46,6 +47,7 @@ struct Overlap {
         std::vector<glm::vec2>   overlapPoints;
         std::optional<glm::vec2> touchPoint;
         std::optional<float>     timeSinceTouch;
+        std::optional<glm::vec2> reflectionVector;
         bool                     bFullOverlap;
         bool                     bWasOverlaping;
         
@@ -78,12 +80,17 @@ struct EffectBag {
 };
 
 struct Player {
+    int score;
 };
 
 
 struct AI {
     std::function<void(entt::registry&, const entt::entity&, float)> tick;
     std::any data;
+};
+
+struct Collectible {
+    bool bCollected;
 };
 
 }

@@ -1,33 +1,40 @@
 #include "gamemanager.hpp"
 
 #include "components/gameplay.hpp"
+#include "entt/entity/fwd.hpp"
+#include "glm/detail/qualifier.hpp"
+#include "utils.hpp"
 
 #include <entt/entt.hpp>
+#include <glm/glm.hpp>
 
 #include <iostream>
 
-GameManager::GameManager(entt::registry& registry) : Manager(registry), m_collectible(entt::null), m_score(0) {
+GameManager::GameManager(entt::registry& registry) : Manager(registry), m_collectible(entt::null) {
 }
 
 void GameManager::tick(float deltaTime) {
-    if (!m_registry.all_of<HAR::Component::Overlap>(m_collectible)) {
-        return;
+    if (m_collectible == entt::null) {
+        init();
     }
-    auto& overlapComp = m_registry.get<HAR::Component::Overlap>(m_collectible);
-    for (auto& [entity, overlapInfo] : overlapComp.overlapInfoMap) {
-        if (m_registry.all_of<HAR::Component::Player>(entity)) {
-            m_score++;
-            auto enemiesView = m_registry.view<HAR::Component::AI>();
-            for (auto& enemyEntity : enemiesView) {
-                if (m_registry.all_of<HAR::Component::Movement>(enemyEntity)) {
-                    auto& movement = m_registry.get<HAR::Component::Movement>(enemyEntity);
-                    movement.maxSpeed += 0.00001f;
-                    movement.acceleration += 0.00001f;
-                }
-            }
+    
+    auto playerView = m_registry.view<HAR::Component::Player>();
+    for (auto& playerEntity : playerView) {
+        auto& player = m_registry.get<HAR::Component::Player>(playerEntity);
+        auto enemyView = m_registry.view<HAR::Component::AI, HAR::Component::Movement>();
+        for (auto& enemyEntity : enemyView) {
+            auto& movement = m_registry.get<HAR::Component::Movement>(enemyEntity);
+            movement.acceleration = player.score * 0.0000001f;
+            movement.maxSpeed = player.score * 0.00001f; 
+        }
+    }
+
+    auto collectibleView = m_registry.view<HAR::Component::Collectible, HAR::Component::Location>();
+    for (auto& collectibleEntity : collectibleView) {
+        auto& collectible = m_registry.get<HAR::Component::Collectible>(collectibleEntity);
+        if (collectible.bCollected) {
             moveCollectible();
-            std::cout << "Score: " << m_score << std::endl;
-            break;
+            collectible.bCollected = false;
         }
     }
 }
@@ -39,10 +46,12 @@ void GameManager::init() {
     m_registry.emplace<HAR::Component::Circle>(m_collectible, 0.05f);
     m_registry.emplace<HAR::Component::Location>(m_collectible, glm::vec2(0.f, 0.f));
     m_registry.emplace<HAR::Component::Overlap>(m_collectible, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>());
+    m_registry.emplace<HAR::Component::Collectible>(m_collectible, false);
     moveCollectible();
 }
 
 void GameManager::moveCollectible() { 
     auto& location = m_registry.get<HAR::Component::Location>(m_collectible);
-    location.value = glm::vec2((rand() % 100) / 100.f, (rand() % 100) / 100.f);
+    srand(time(0));
+    location.value = possibleSpawnLocation.at(rand() % possibleSpawnLocation.size());
 }

@@ -6,7 +6,7 @@
 
 #include "components/gameplay.hpp"
 #include "components/geometry.hpp"
-#include "point.h"
+#include "components/render.hpp"
 
 #include <path_finder.h>
 #include <polygon.h>
@@ -30,86 +30,105 @@ std::optional<glm::vec2> HAR::Math::getIntersection(
     const glm::vec2& sA, const glm::vec2& fA,
     const glm::vec2& sB, const glm::vec2& fB)
 {
-    glm::vec2 r = fA - sA; // Вектор отрезка AB
-    glm::vec2 s = fB - sB; // Вектор отрезка CD
-    glm::vec2 qp = sB - sA; // Вектор между начальными точками AB и CD
+    glm::vec2 r = fA - sA;
+    glm::vec2 s = fB - sB;
+    glm::vec2 qp = sB - sA;
     float rxs = glm::cross(glm::vec3(r, 0.0f), glm::vec3(s, 0.0f)).z;
     float qpxr = glm::cross(glm::vec3(qp, 0.0f), glm::vec3(r, 0.0f)).z;
 
     if (abs(rxs) < 1e-8) {
-        return {}; // Отрезки параллельны или лежат на одной прямой
+        return {};
     }
 
     float t = glm::cross(glm::vec3(qp, 0.0f), glm::vec3(s, 0.0f)).z / rxs;
     float u = qpxr / rxs;
     if (t >= 0.0f && t <= 1.0f && u >= 0.0f && u <= 1.0f) {
-        return sA + t * r; // Точка пересечения находится на обоих отрезках
+        return sA + t * r;
     }
 
-    return {}; // Отрезки не пересекаются
+    return {};
 }
 
 void HAR::AI::chasePlayer(entt::registry& registry, const entt::entity& entity, float deltaTime) {
-    // if (!registry.all_of<HAR::Component::Location, HAR::Component::AI, HAR::Component::Controlled>(entity)) {
-    //     return;
-    // }
+            if (!!!registry.all_of<HAR::Component::Location, HAR::Component::AI, HAR::Component::Controlled>(entity)) [[unlikely]] {
+            return;
+        }
+        auto& enemyAiComp = registry.get<HAR::Component::AI>(entity);
+        auto& enemyLocationComp = registry.get<HAR::Component::Location>(entity);
+        auto& enemyControlledComp = registry.get<HAR::Component::Controlled>(entity);
 
-    // auto& aiLocationComp = registry.get<HAR::Component::Location>(entity);
-    // auto& aiControlledComp = registry.get<HAR::Component::Controlled>(entity);
-    // auto& aiComp = registry.get<HAR::Component::AI>(entity);
-    
-    // auto pathFinder = std::any_cast<NavMesh::PathFinder*>(aiComp.data);
-    // if (!pathFinder) {
-    //     return;
-    // }
+        auto enemyCanSeePlayer = true;       
+        
+        auto& targetLocation = std::any_cast<glm::vec2&>(enemyAiComp.data);
 
-    // std::vector<NavMesh::Polygon> polygons_to_add;
-    // auto polygonView = registry.view<HAR::Component::Location, HAR::Component::PhysicalBody, HAR::Component::Polyhedron>();
-    // for (auto& polygonEntity : polygonView) {
-    //     NavMesh::Polygon polygon;
-    //     auto& polygonLocationComp = polygonView.get<HAR::Component::Location>(polygonEntity);
-    //     auto& polygonPolyhedronComp = polygonView.get<HAR::Component::Polyhedron>(polygonEntity);
-    //     for (auto& vertex : polygonPolyhedronComp.vertices) {
-    //         NavMesh::Point point(vertex.x * 10, vertex.y * 10, 0.0f);
-    //         // polygon.AddPoint(vertex.x, vertex.y, 0.0f);
-    //     }
+        auto view = registry.view<HAR::Component::Location, HAR::Component::Player>();
+        for (auto& playerEntity : view) {
+            auto& playerlocationComp = registry.get<HAR::Component::Location>(playerEntity);
+            auto direction = glm::normalize(playerlocationComp.value - enemyLocationComp.value);
+            auto visionBarrierView = registry.view<HAR::Component::Renderable, HAR::Component::Location>();
+            for (auto& visionBarrierEntity : visionBarrierView) {
+                auto visionBarrierLocationComp = registry.get<HAR::Component::Location>(visionBarrierEntity);
+                if (registry.any_of<HAR::Component::Player, HAR::Component::AI>(visionBarrierEntity)) {
+                    continue;
+                }
+                if (registry.all_of<HAR::Component::Circle>(visionBarrierEntity)) {
+                    // TODO: Check sight overlaps cirlce
+                    // refactor overlap manager to use a function that check if line segment intersects with circle
+                    // auto circle = registry.get<HAR::Component::Circle>(visionBarrierEntity).radius = 0.1f;
+                }
+                    
+                if (registry.all_of<HAR::Component::Polyhedron>(visionBarrierEntity)) {
+                    auto& polyhedron = registry.get<HAR::Component::Polyhedron>(visionBarrierEntity);
+                    for (size_t i = 0; i < polyhedron.vertices.size(); ++i) {
+                        glm::vec2 start = polyhedron.vertices[i] + visionBarrierLocationComp.value;
+                        glm::vec2 end = polyhedron.vertices[(i + 1) % polyhedron.vertices.size()] + visionBarrierLocationComp.value;
+                        if (HAR::Math::getIntersection(enemyLocationComp.value, playerlocationComp.value, start, end).has_value()) {
+                            enemyCanSeePlayer = false;
+                        }
+                    }
 
-    //     polygons_to_add.push_back(NavMesh::Polygon(polygonPolyhedronComp.vertices));
-    //     pathFinder->AddPolygons(polygons_to_add, 0);
-    // }
-    // pathFinder->AddPolygons(const std::vector<Polygon> &polygons_to_add, int inflate_by)
+                    if (!!!enemyCanSeePlayer) {
+                        break;
+                    }
+                }
+            }
+            
+            if (registry.all_of<HAR::Component::Renderable>(entity)) {
+                auto& enemyRenderableComp = registry.get<HAR::Component::Renderable>(entity);
+                enemyRenderableComp.visible = enemyCanSeePlayer;
+            }
 
-    // auto view = registry.view<HAR::Component::Location, HAR::Component::Player>();
-    // for (auto& playerEntity : view) {
-    //     auto& playerlocationComp = registry.get<HAR::Component::Location>(playerEntity);
-    //     auto direction = glm::normalize(playerlocationComp.value - aiLocationComp.value);
-    //     aiControlledComp.movementDir = direction;
-    // }
+            if (enemyCanSeePlayer) {
+                targetLocation = playerlocationComp.value;
+                break;
+            }
+        }
+        enemyControlledComp.movementDir = glm::normalize(targetLocation - enemyLocationComp.value);
 }
 
 void HAR::Collision::pushCollidedComponents(entt::registry& registry, const entt::entity& entity) {
-        auto view = registry.view<HAR::Component::Movement, HAR::Component::Location>();
-    for (auto& entity : view) {
-        auto& location = view.get<HAR::Component::Location>(entity);
-        auto& movementComp = view.get<HAR::Component::Movement>(entity);
-        auto futureLocation = location.value + movementComp.velocity * 0.1f;
-
-        if (registry.all_of<HAR::Component::PhysicalBody, HAR::Component::Overlap>(entity)) {
-            auto& overlapComp = registry.get<HAR::Component::Overlap>(entity);
-            auto& physicalBodyComp = registry.get<HAR::Component::PhysicalBody>(entity);
-            if (!!!overlapComp.overlapInfoMap.empty()) {
-                for (auto& [overlapsEntity, overlapInfo] : overlapComp.overlapInfoMap) {
-                    if (registry.all_of<HAR::Component::PhysicalBody>(overlapsEntity) && overlapInfo.touchPoint.has_value()) {
+    if (registry.all_of<HAR::Component::PhysicalBody, HAR::Component::Overlap>(entity)) {
+        auto& overlapComp = registry.get<HAR::Component::Overlap>(entity);
+        auto& physicalBodyComp = registry.get<HAR::Component::PhysicalBody>(entity);
+        if (!!!overlapComp.overlapInfoMap.empty()) {
+            for (auto& [overlapsEntity, overlapInfo] : overlapComp.overlapInfoMap) {
+                if (registry.all_of<HAR::Component::PhysicalBody, HAR::Component::Location>(overlapsEntity) && overlapInfo.touchPoint.has_value()) {
+                    auto& location = registry.get<HAR::Component::Location>(overlapsEntity);
+                    auto futureLocation = location.value;
+                    if (registry.all_of<HAR::Component::Movement>(overlapsEntity)) {
+                        auto& movementComp = registry.get<HAR::Component::Movement>(overlapsEntity);
+                        futureLocation += movementComp.velocity;
                         glm::vec2 collisionNormal = glm::normalize(location.value - overlapInfo.touchPoint.value());
-                        movementComp.velocity = glm::reflect(movementComp.velocity, collisionNormal) * physicalBodyComp.hitPower;
-                        futureLocation = overlapInfo.touchPoint.value() + collisionNormal * (glm::length(overlapInfo.touchPoint.value() - location.value) + 0.01f);
+                        movementComp.velocity = (overlapInfo.reflectionVector ? *overlapInfo.reflectionVector : glm::reflect(movementComp.velocity, collisionNormal)) * physicalBodyComp.hitPower;
+                        futureLocation = overlapInfo.touchPoint.value() + collisionNormal * (glm::length(overlapInfo.touchPoint.value() - location.value));
+                        location.value = futureLocation;
                     }
                 }
             }
         }
-        location.value = futureLocation;
     }
 }
+
 
 template <typename T>
 void HAR::Effect::applyEffect(const EffectData &effectData, entt::registry &registry, const entt::entity &entity) {

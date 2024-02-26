@@ -33,145 +33,236 @@ void Application::run() {
     m_data.lastTime = 0.f;
     m_data.registry.clear();
 
-    auto entityCircle = m_data.registry.create();
-    m_data.registry.emplace<HAR::Component::Renderable>(entityCircle, true);
-    m_data.registry.emplace<HAR::Component::Color>(entityCircle, glm::vec4(0.f, 0.f, 0.f, 1.f));
-    m_data.registry.emplace<HAR::Component::Circle>(entityCircle, 0.035f);
-    m_data.registry.emplace<HAR::Component::Location>(entityCircle, glm::vec2(0.f, 0.f));
-    m_data.registry.emplace<HAR::Component::Overlap>(entityCircle, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>());
-    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityCircle, 1.f);
-    m_data.registry.emplace<HAR::Component::Controlled>(entityCircle, glm::vec2(0.f, 0.f));
-    m_data.registry.emplace<HAR::Component::Player>(entityCircle);
-    m_data.registry.emplace<HAR::Component::EffectBag>(entityCircle, std::list<std::shared_ptr<Effect>>());
-    m_data.registry.emplace<HAR::Component::Movement>(entityCircle,
-        .0001f,
-        .002f,
+    auto entityPlayer = m_data.registry.create();
+    m_data.registry.emplace<HAR::Component::Renderable>(entityPlayer, true);
+    m_data.registry.emplace<HAR::Component::Color>(entityPlayer, glm::vec4(0.f, 1.f, 0.f, 1.f));
+    m_data.registry.emplace<HAR::Component::Circle>(entityPlayer, 0.035f);
+    m_data.registry.emplace<HAR::Component::Location>(entityPlayer, glm::vec2(0.f, 0.f));
+    m_data.registry.emplace<HAR::Component::Overlap>(entityPlayer, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>(), [&](entt::registry& registry, entt::entity entity) {
+        if (!!!registry.all_of<HAR::Component::Player, HAR::Component::Overlap>(entity)) [[unlikely]] {
+            return;
+        }
+
+        auto& playerOverlapComp = registry.get<HAR::Component::Overlap>(entity);
+        auto& playerPlayerComp = registry.get<HAR::Component::Player>(entity);
+        auto collectibleView = m_data.registry.view<HAR::Component::Collectible, HAR::Component::Overlap>();
+        for (auto collectibleView : collectibleView) {
+            if (playerOverlapComp.overlapInfoMap.find(collectibleView) != playerOverlapComp.overlapInfoMap.end()) {
+                auto& collectibleComp = m_data.registry.get<HAR::Component::Collectible>(collectibleView);
+                playerPlayerComp.score++;
+                collectibleComp.bCollected = true;
+            }
+        }
+    });
+    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityPlayer, 1.f);
+    m_data.registry.emplace<HAR::Component::Controlled>(entityPlayer, glm::vec2(0.f, 0.f));
+    m_data.registry.emplace<HAR::Component::Player>(entityPlayer);
+    m_data.registry.emplace<HAR::Component::EffectBag>(entityPlayer, std::list<std::shared_ptr<Effect>>());
+    m_data.registry.emplace<HAR::Component::Movement>(entityPlayer,
+        .00001f,
+        .001f,
         .01f,
         .01f,
         glm::vec2(0.f, 0.f),
         glm::vec2(0.f, 0.f)
     );
 
-    auto entityEnemy = m_data.registry.create();
-    m_data.registry.emplace<HAR::Component::Renderable>(entityEnemy, true);
-    m_data.registry.emplace<HAR::Component::Color>(entityEnemy, glm::vec4(0.f, 1.f, 0.f, 1.f));
-    m_data.registry.emplace<HAR::Component::Circle>(entityEnemy, 0.035f);
-    m_data.registry.emplace<HAR::Component::Location>(entityEnemy, glm::vec2(0.3f, 0.3f));
-    m_data.registry.emplace<HAR::Component::Overlap>(entityEnemy, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>());
-    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityEnemy, 1.f);
-    m_data.registry.emplace<HAR::Component::Controlled>(entityEnemy, glm::vec2(0.f, 0.f));
-    m_data.registry.emplace<HAR::Component::EffectBag>(entityEnemy, std::list<std::shared_ptr<Effect>>());
-    m_data.registry.emplace<HAR::Component::Movement>(entityEnemy,
+    auto entityEnemyGreg = m_data.registry.create();
+    m_data.registry.emplace<HAR::Component::Renderable>(entityEnemyGreg, true);
+    m_data.registry.emplace<HAR::Component::Color>(entityEnemyGreg, glm::vec4(1.f, 0.f, 0.f, 1.f));
+    m_data.registry.emplace<HAR::Component::Circle>(entityEnemyGreg, 0.035f);
+    m_data.registry.emplace<HAR::Component::Location>(entityEnemyGreg, glm::vec2(0.3f, 0.3f));
+    m_data.registry.emplace<HAR::Component::Overlap>(entityEnemyGreg, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>(), [&](entt::registry& registry, entt::entity entity) {
+        auto playerView = registry.view<HAR::Component::Player>();
+        for (auto& player : playerView) {
+            if (!!!registry.all_of<HAR::Component::Overlap>(entity)) [[unlikely]] {
+                return;
+            }
+            auto& enemyOverlapComp = registry.get<HAR::Component::Overlap>(entity);
+            if (enemyOverlapComp.overlapInfoMap.find(player) != enemyOverlapComp.overlapInfoMap.end()) {
+                auto& playerComp = registry.get<HAR::Component::Player>(player);
+                playerComp.score /= 2;
+                std::cout << "TOUCH" << std::endl;
+            }
+        }
+    });
+    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityEnemyGreg, 1.f);
+    m_data.registry.emplace<HAR::Component::Controlled>(entityEnemyGreg, glm::vec2(0.f, 0.f));
+    m_data.registry.emplace<HAR::Component::EffectBag>(entityEnemyGreg, std::list<std::shared_ptr<Effect>>());
+    m_data.registry.emplace<HAR::Component::Movement>(entityEnemyGreg,
     .000001f,
     .0001f,
-    .001f,
-    .001f,
+    .06f,
+    .06f,
     glm::vec2(0.f, 0.f),
     glm::vec2(0.f, 0.f)
     );
-    m_data.registry.emplace<HAR::Component::AI>(entityEnemy, [&](entt::registry& registry, const entt::entity& entity, float deltaTime) {
-        if (!!!registry.all_of<HAR::Component::Location, HAR::Component::AI, HAR::Component::Controlled>(entity)) [[unlikely]] {
-            return;
-        }
-        auto& enemyAiComp = registry.get<HAR::Component::AI>(entity);
-        auto& enemyLocationComp = registry.get<HAR::Component::Location>(entity);
-        auto& enemyControlledComp = registry.get<HAR::Component::Controlled>(entity);
+    m_data.registry.emplace<HAR::Component::AI>(entityEnemyGreg, [&](entt::registry& registry, const entt::entity& entity, float deltaTime) {
+        HAR::AI::chasePlayer(registry, entity, deltaTime);
+    }, glm::vec2(0.f, 0.f));
 
-        auto enemyCanSeePlayer = true;       
-        
-        auto& targetLocation = std::any_cast<glm::vec2&>(enemyAiComp.data);
-
-        auto view = registry.view<HAR::Component::Location, HAR::Component::Player>();
-        for (auto& playerEntity : view) {
-            auto& playerlocationComp = registry.get<HAR::Component::Location>(playerEntity);
-            auto direction = glm::normalize(playerlocationComp.value - enemyLocationComp.value);
-            auto visionBarrierView = registry.view<HAR::Component::Renderable, HAR::Component::Location>();
-            for (auto& visionBarrierEntity : visionBarrierView) {
-                auto visionBarrierLocationComp = registry.get<HAR::Component::Location>(visionBarrierEntity);
-                if (registry.any_of<HAR::Component::Player, HAR::Component::AI>(visionBarrierEntity)) {
-                    continue;
-                }
-                if (registry.all_of<HAR::Component::Circle>(visionBarrierEntity)) {
-                    // TODO: Check sight overlaps cirlce
-                    // refactor overlap manager to use a function that check if line segment intersects with circle
-                    // auto circle = registry.get<HAR::Component::Circle>(visionBarrierEntity).radius = 0.1f;
-                }
-                    
-                if (registry.all_of<HAR::Component::Polyhedron>(visionBarrierEntity)) {
-                    auto& polyhedron = registry.get<HAR::Component::Polyhedron>(visionBarrierEntity);
-                    for (size_t i = 0; i < polyhedron.vertices.size(); ++i) {
-                        glm::vec2 start = polyhedron.vertices[i] + visionBarrierLocationComp.value;
-                        glm::vec2 end = polyhedron.vertices[(i + 1) % polyhedron.vertices.size()] + visionBarrierLocationComp.value;
-                        if (HAR::Math::getIntersection(enemyLocationComp.value, playerlocationComp.value, start, end).has_value()) {
-                            enemyCanSeePlayer = false;
-                        }
-                    }
-
-                    if (!!!enemyCanSeePlayer) {
-                        break;
-                    }
-                }
+    auto entityEnemyJosh = m_data.registry.create();
+    m_data.registry.emplace<HAR::Component::Renderable>(entityEnemyJosh, true);
+    m_data.registry.emplace<HAR::Component::Color>(entityEnemyJosh, glm::vec4(1.f, 0.f, 0.f, 1.f));
+    m_data.registry.emplace<HAR::Component::Circle>(entityEnemyJosh, 0.035f);
+    m_data.registry.emplace<HAR::Component::Location>(entityEnemyJosh, glm::vec2(-0.3f, 0.3f));
+    m_data.registry.emplace<HAR::Component::Overlap>(entityEnemyJosh, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>(), [&](entt::registry& registry, entt::entity entity) {
+        auto playerView = registry.view<HAR::Component::Player>();
+        for (auto& player : playerView) {
+            if (!!!registry.all_of<HAR::Component::Overlap>(entity)) [[unlikely]] {
+                return;
             }
-            
-            if (registry.all_of<HAR::Component::Renderable>(entity)) {
-                auto& enemyRenderableComp = registry.get<HAR::Component::Renderable>(entity);
-                enemyRenderableComp.visible = enemyCanSeePlayer;
-            }
-
-            if (enemyCanSeePlayer) {
-                targetLocation = playerlocationComp.value;
-                break;
+            auto& enemyOverlapComp = registry.get<HAR::Component::Overlap>(entity);
+            if (enemyOverlapComp.overlapInfoMap.find(player) != enemyOverlapComp.overlapInfoMap.end()) {
+                auto& playerComp = registry.get<HAR::Component::Player>(player);
+                playerComp.score /= 2;
+                std::cout << "TOUCH" << std::endl;
             }
         }
-        enemyControlledComp.movementDir = glm::normalize(targetLocation - enemyLocationComp.value);
+    });
+    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityEnemyJosh, 1.f);
+    m_data.registry.emplace<HAR::Component::Controlled>(entityEnemyJosh, glm::vec2(0.f, 0.f));
+    m_data.registry.emplace<HAR::Component::EffectBag>(entityEnemyJosh, std::list<std::shared_ptr<Effect>>());
+    m_data.registry.emplace<HAR::Component::Movement>(entityEnemyJosh,
+    .000001f,
+    .0001f,
+    .06f,
+    .06f,
+    glm::vec2(0.f, 0.f),
+    glm::vec2(0.f, 0.f)
+    );
+    m_data.registry.emplace<HAR::Component::AI>(entityEnemyJosh, [&](entt::registry& registry, const entt::entity& entity, float deltaTime) {
+        HAR::AI::chasePlayer(registry, entity, deltaTime);
     }, glm::vec2(0.f, 0.f));
 
 
 
-
-    auto entityPolyhedron = m_data.registry.create();
-    m_data.registry.emplace<HAR::Component::Renderable>(entityPolyhedron, true);
-    m_data.registry.emplace<HAR::Component::Color>(entityPolyhedron, glm::vec4(1.f, 0.f, 0.f, 1.f));
-    m_data.registry.emplace<HAR::Component::Overlap>(entityPolyhedron, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>(), [&](entt::registry& registry, entt::entity entity) {
-        // HAR::Collision::pushCollidedComponents(registry, entity);
-        BarrierCollisionEffectData data;
-        data.acceleration = 0.00001f;
-        data.accelerationLossFactor = 0.0f;
-        data.ownAccelerationPenalty = 0.0f;
-        data.ownAcelerationPenaltyLooseFactor = 0.0f;
-        data.duration = 1000.f;
-        // HAR::Effect::applyEffect<BarrierCollisionEffect>(data, registry, entity);
-        for (auto& [colidedEntity, overlapInfo] : registry.get<HAR::Component::Overlap>(entity).overlapInfoMap) {
-            if (registry.all_of<HAR::Component::EffectBag>(colidedEntity)) {
-                auto& effectBag = registry.get<HAR::Component::EffectBag>(colidedEntity);
-                BarrierCollisionEffect effect(registry, colidedEntity, data);
-                effectBag.effectsList.push_back(std::make_shared<BarrierCollisionEffect>(effect));
-            }
-        }
+    auto entityLeftBorder = m_data.registry.create();
+    m_data.registry.emplace<HAR::Component::Renderable>(entityLeftBorder, true);
+    m_data.registry.emplace<HAR::Component::Color>(entityLeftBorder, glm::vec4(0.f, 0.f, 0.f, 1.f));
+    m_data.registry.emplace<HAR::Component::Location>(entityLeftBorder, glm::vec2(0.f, 0.f));
+    m_data.registry.emplace<HAR::Component::Polyhedron>(entityLeftBorder, std::vector<glm::vec2>{
+        glm::vec2(-1.0f, -1.0f),
+        glm::vec2(-1.0f, 1.0f),
+        glm::vec2(-.99f, 1.0f),
+        glm::vec2(-.99f, -1.0f)
     });
-    m_data.registry.emplace<HAR::Component::Location>(entityPolyhedron, glm::vec2(-0.7f, 0.3f));
-    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityPolyhedron, 10.f);
-    m_data.registry.emplace<HAR::Component::Polyhedron>(entityPolyhedron, std::vector<glm::vec2>{
-        glm::vec2(-0.15f, -0.1f),
-        glm::vec2(-0.1f, 0.15f),
-        glm::vec2(0.05f, 0.2f),
-        glm::vec2(0.2f, 0.05f),
+    m_data.registry.emplace<HAR::Component::Overlap>(entityLeftBorder, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>(), [&](entt::registry& registry, entt::entity entity) {
+        HAR::Collision::pushCollidedComponents(registry, entity);
+    });
+    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityLeftBorder, .11f);
+
+    auto entityRightBorder = m_data.registry.create();
+    m_data.registry.emplace<HAR::Component::Renderable>(entityRightBorder, true);
+    m_data.registry.emplace<HAR::Component::Color>(entityRightBorder, glm::vec4(0.f, 0.f, 0.f, 1.f));
+    m_data.registry.emplace<HAR::Component::Location>(entityRightBorder, glm::vec2(0.f, 0.f));
+    m_data.registry.emplace<HAR::Component::Polyhedron>(entityRightBorder, std::vector<glm::vec2>{
+        glm::vec2(.99f, -1.0f),
+        glm::vec2(.99f, 1.0f),
+        glm::vec2(1.0f, 1.0f),
+        glm::vec2(1.0f, -1.0f)
+    });
+    m_data.registry.emplace<HAR::Component::Overlap>(entityRightBorder, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>(), [&](entt::registry& registry, entt::entity entity) {
+        HAR::Collision::pushCollidedComponents(registry, entity);
+    });
+    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityRightBorder, .11f);
+
+    auto entityTopBorder = m_data.registry.create();
+    m_data.registry.emplace<HAR::Component::Renderable>(entityTopBorder, true);
+    m_data.registry.emplace<HAR::Component::Color>(entityTopBorder, glm::vec4(0.f, 0.f, 0.f, 1.f));
+    m_data.registry.emplace<HAR::Component::Location>(entityTopBorder, glm::vec2(0.f, 0.f));
+    m_data.registry.emplace<HAR::Component::Polyhedron>(entityTopBorder, std::vector<glm::vec2>{
+        glm::vec2(-1.f, .99f),
+        glm::vec2(-1.f, 1.0f),
+        glm::vec2(1.0f, 1.0f),
+        glm::vec2(1.0f, .99f)
+    });
+    m_data.registry.emplace<HAR::Component::Overlap>(entityTopBorder, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>(), [&](entt::registry& registry, entt::entity entity) {
+        HAR::Collision::pushCollidedComponents(registry, entity);
+    });
+    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityTopBorder, .11f);
+
+
+    auto entityBottomBorder = m_data.registry.create();
+    m_data.registry.emplace<HAR::Component::Renderable>(entityBottomBorder, true);
+    m_data.registry.emplace<HAR::Component::Color>(entityBottomBorder, glm::vec4(0.f, 0.f, 0.f, 1.f));
+    m_data.registry.emplace<HAR::Component::Location>(entityBottomBorder, glm::vec2(0.f, 0.f));
+    m_data.registry.emplace<HAR::Component::Polyhedron>(entityBottomBorder, std::vector<glm::vec2>{
+        glm::vec2(-1.f, -1.f),
+        glm::vec2(-1.f, -.99f),
+        glm::vec2(1.0f, -.99f),
+        glm::vec2(1.0f, -1.f)
+    });
+    m_data.registry.emplace<HAR::Component::Overlap>(entityBottomBorder, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>(), [&](entt::registry& registry, entt::entity entity) {
+        HAR::Collision::pushCollidedComponents(registry, entity);
+    });
+    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityBottomBorder, .11f);
+
+
+
+    auto entityObstacleDefault = m_data.registry.create();
+    m_data.registry.emplace<HAR::Component::Renderable>(entityObstacleDefault, true);
+    m_data.registry.emplace<HAR::Component::Color>(entityObstacleDefault, glm::vec4(0.f, 0.f, 0.f, 1.f));
+    m_data.registry.emplace<HAR::Component::Overlap>(entityObstacleDefault, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>(), [&](entt::registry& registry, entt::entity entity) {
+        HAR::Collision::pushCollidedComponents(registry, entity);
+        // BarrierCollisionEffectData data;
+        // data.acceleration = 0.00001f;
+        // data.accelerationLossFactor = 0.0f;
+        // data.ownAccelerationPenalty = 0.0f;
+        // data.ownAcelerationPenaltyLooseFactor = 0.0f;
+        // data.duration = 1000.f;
+        // for (auto& [colidedEntity, overlapInfo] : registry.get<HAR::Component::Overlap>(entity).overlapInfoMap) {
+        //     if (registry.all_of<HAR::Component::EffectBag>(colidedEntity)) {
+        //         auto& effectBag = registry.get<HAR::Component::EffectBag>(colidedEntity);
+        //         BarrierCollisionEffect effect(registry, colidedEntity, data);
+        //         effectBag.effectsList.push_back(std::make_shared<BarrierCollisionEffect>(effect));
+        //     }
+        // }
+    });
+    m_data.registry.emplace<HAR::Component::Location>(entityObstacleDefault, glm::vec2(-0.1f, 0.5f));
+    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityObstacleDefault, .11f);
+    m_data.registry.emplace<HAR::Component::Polyhedron>(entityObstacleDefault, std::vector<glm::vec2>{
+        glm::vec2(-0.1f, -0.17f),
+        glm::vec2(-0.7f, 0.35f),
+        glm::vec2(0.05f, 0.55f),
+        glm::vec2(0.2f, 0.25f),
         glm::vec2(0.15f, -0.15f),
-        glm::vec2(0.0f, -0.2f)
+        glm::vec2(0.0f, -0.7f)
     });
 
-    // auto entityDebugPolyhedron = m_data.registry.create();
-    // m_data.registry.emplace<HAR::Component::Renderable>(entityDebugPolyhedron, true);
-    // m_data.registry.emplace<HAR::Component::Color>(entityDebugPolyhedron, glm::vec4(0.f, 1.f, 0.f, 1.f));
-    // m_data.registry.emplace<HAR::Component::Location>(entityDebugPolyhedron, glm::vec2(-0.7f, 0.3f));
-    // m_data.registry.emplace<HAR::Component::Polyhedron>(entityDebugPolyhedron, HAR::Math::InflatePolygon(std::vector<glm::vec2>{
-    //     glm::vec2(-0.3f, -0.2f),
-    //     glm::vec2(-0.2f, 0.3f),
-    //     glm::vec2(0.1f, 0.4f),
-    //     glm::vec2(0.4f, 0.1f),
-    //     glm::vec2(0.3f, -0.3f),
-    //     glm::vec2(0.0f, -0.4f)
-    // }, 0.07f));
+    auto entityObstacleBig = m_data.registry.create();
+    m_data.registry.emplace<HAR::Component::Renderable>(entityObstacleBig, true);
+    m_data.registry.emplace<HAR::Component::Color>(entityObstacleBig, glm::vec4(0.f, 0.f, 0.f, 1.f));
+    m_data.registry.emplace<HAR::Component::Overlap>(entityObstacleBig, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>(), [&](entt::registry& registry, entt::entity entity) {
+        HAR::Collision::pushCollidedComponents(registry, entity);
+    });
+    m_data.registry.emplace<HAR::Component::Location>(entityObstacleBig, glm::vec2(.7f, -.7f));
+    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityObstacleBig, .11f);
+    m_data.registry.emplace<HAR::Component::Polyhedron>(entityObstacleBig, std::vector<glm::vec2>{
+        glm::vec2(-0.7f, -0.09f),
+        glm::vec2(-0.2f, 0.65f),
+        glm::vec2(0.4f, 0.9f),
+        glm::vec2(0.6f, 0.65f),
+        glm::vec2(0.7f, -0.35f),
+        glm::vec2(0.6f, -0.5f),
+        glm::vec2(0.4f, -0.55f),
+        glm::vec2(-0.6f, -0.5f)
+    });
+
+
+    auto entityObstacleOneMore = m_data.registry.create();
+    m_data.registry.emplace<HAR::Component::Renderable>(entityObstacleOneMore, true);
+    m_data.registry.emplace<HAR::Component::Color>(entityObstacleOneMore, glm::vec4(0.f, 0.f, 0.f, 1.f));
+    m_data.registry.emplace<HAR::Component::Overlap>(entityObstacleOneMore, std::unordered_map<entt::entity, HAR::Component::Overlap::OverlapInfo>(), [&](entt::registry& registry, entt::entity entity) {
+        HAR::Collision::pushCollidedComponents(registry, entity);
+    });
+    m_data.registry.emplace<HAR::Component::Location>(entityObstacleOneMore, glm::vec2(-.8f, -.2f));
+    m_data.registry.emplace<HAR::Component::PhysicalBody>(entityObstacleOneMore, .11f);
+    m_data.registry.emplace<HAR::Component::Polyhedron>(entityObstacleOneMore, std::vector<glm::vec2>{
+        glm::vec2(-0.22f, -1.f),
+        glm::vec2(0.3f, 0.3f),
+        glm::vec2(0.2f, -1.f)
+    }); 
 
     m_data.managers.emplace_back(std::make_unique<InputManager>(m_data.registry))->init();
     m_data.managers.emplace_back(std::make_unique<AIManager>(m_data.registry))->init();

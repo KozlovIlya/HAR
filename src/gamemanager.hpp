@@ -7,8 +7,19 @@
 #include "components/geometry.hpp"
 #include "components/render.hpp"
 
+#include <array>
 #include <entt/entity/fwd.hpp>
 #include <stdint.h>
+#include <vector>
+
+
+const std::vector<glm::vec2> possibleSpawnLocation = {
+        glm::vec2(.4f, .4f),
+        glm::vec2(.8f, 0.5f),
+        glm::vec2(-.9f, .0f),
+        glm::vec2(-.8f, .5f),
+        glm::vec2(-.3f, -.75f),
+};
 
 class GameManager : public Manager {
 public:
@@ -21,5 +32,7 @@ protected:
     void moveCollectible();
 protected:
     entt::entity m_collectible;
-    int m_score;
+    entt::entity m_player;
+    std::vector<entt::entity> m_enemies;
+    std::vector<entt::entity> m_obstacles;
 };
