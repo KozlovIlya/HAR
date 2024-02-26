@@ -37,6 +37,10 @@ struct Movement {
     glm::vec2 intertia;
 };
 
+struct PendingMovement {
+    glm::vec2 velocity;
+};
+
 struct Controlled {
     glm::vec2 movementDir;
 

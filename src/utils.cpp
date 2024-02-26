@@ -110,18 +110,24 @@ void HAR::Collision::pushCollidedComponents(entt::registry& registry, const entt
     if (registry.all_of<HAR::Component::PhysicalBody, HAR::Component::Overlap>(entity)) {
         auto& overlapComp = registry.get<HAR::Component::Overlap>(entity);
         auto& physicalBodyComp = registry.get<HAR::Component::PhysicalBody>(entity);
-        if (!!!overlapComp.overlapInfoMap.empty()) {
+        if (!overlapComp.overlapInfoMap.empty()) {
             for (auto& [overlapsEntity, overlapInfo] : overlapComp.overlapInfoMap) {
                 if (registry.all_of<HAR::Component::PhysicalBody, HAR::Component::Location>(overlapsEntity) && overlapInfo.touchPoint.has_value()) {
                     auto& location = registry.get<HAR::Component::Location>(overlapsEntity);
                     auto futureLocation = location.value;
                     if (registry.all_of<HAR::Component::Movement>(overlapsEntity)) {
                         auto& movementComp = registry.get<HAR::Component::Movement>(overlapsEntity);
-                        futureLocation += movementComp.velocity;
                         glm::vec2 collisionNormal = glm::normalize(location.value - overlapInfo.touchPoint.value());
-                        movementComp.velocity = (overlapInfo.reflectionVector ? *overlapInfo.reflectionVector : glm::reflect(movementComp.velocity, collisionNormal)) * physicalBodyComp.hitPower;
-                        futureLocation = overlapInfo.touchPoint.value() + collisionNormal * (glm::length(overlapInfo.touchPoint.value() - location.value));
-                        location.value = futureLocation;
+                        glm::vec2 reflectionVector = (overlapInfo.reflectionVector ? *overlapInfo.reflectionVector : glm::reflect(movementComp.velocity, collisionNormal)) * physicalBodyComp.hitPower;
+                        glm::vec2 futureVelocity = reflectionVector;
+
+                        if (overlapInfo.timeSinceTouch.has_value()) {
+                            float time = overlapInfo.timeSinceTouch.value();
+                            futureLocation += reflectionVector * time;
+                            futureVelocity = reflectionVector;
+                        }
+
+                        registry.emplace_or_replace<HAR::Component::PendingMovement>(overlapsEntity, HAR::Component::PendingMovement{ futureVelocity });
                     }
                 }
             }
